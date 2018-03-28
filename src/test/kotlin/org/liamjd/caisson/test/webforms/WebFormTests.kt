@@ -4,7 +4,7 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.liamjd.caisson.annotations.CConverter
-import org.liamjd.caisson.org.liamjd.caisson.convertors.Converter
+import org.liamjd.caisson.convertors.Converter
 import org.liamjd.caisson.webforms.Form
 import java.text.ParseException
 import java.text.SimpleDateFormat

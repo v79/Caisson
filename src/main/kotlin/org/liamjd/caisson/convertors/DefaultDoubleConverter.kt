@@ -1,4 +1,4 @@
-package org.liamjd.caisson.org.liamjd.caisson.convertors
+package org.liamjd.caisson.convertors
 
 class DefaultDoubleConverter : Converter {
 	override fun convert(from: String): Double {
