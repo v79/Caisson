@@ -4,6 +4,8 @@ buildscript {
     ext.kotlin_version = '1.2.31'
     ext.kotlin_test_version = '3.0.0-RC2'
     ext.spek_version = '1.1.5'
+    ext.thymeleaf_version = '3.0.6.RELEASE'
+    ext.spark_kotlin_version = '1.0.0-alpha'
 
     repositories {
         mavenCentral()
@@ -16,20 +18,31 @@ buildscript {
 }
 
 group 'org.liamjd'
-version '0.0.1-SNAPSHOT'
+version '0.0.3-SNAPSHOT'
 
 // plugins
 apply plugin: 'kotlin'
+apply plugin: 'maven-publish'
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
     // Kotlin language
-//    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version: "$kotlin_version"
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: "$kotlin_version"
+
+    // logging
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.6.2'
+
+    // spark web framework
+    compile group: 'com.sparkjava', name: 'spark-kotlin', version: "$spark_kotlin_version"
+
+    // Thymeleaf templating engine
+    compile group: 'org.thymeleaf', name:"thymeleaf", version: "$thymeleaf_version"
+    compile group: 'org.thymeleaf.extras', name: 'thymeleaf-extras-java8time', version: '3.0.0.RELEASE'
 
     // testing
     testCompile group: "org.jetbrains.kotlin", name: "kotlin-test", version: "$kotlin_version"
@@ -50,4 +63,21 @@ compileKotlin {
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+// deploy to maven local
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+publishing {
+    repositories {
+        maven {
+            // change to point to your repo, e.g. http://my.org/repo
+            url "$buildDir/repo"
+        }
+    }
 }
