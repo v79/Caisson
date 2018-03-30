@@ -18,6 +18,7 @@ data class SimpleInt(val myNumber: Int)
 data class SimpleBool(val myBoolean: Boolean)
 data class SimpleDouble(val myDouble: Double)
 data class SimpleLong(val myLong: Long)
+data class SimpleFloat(val myFloat: Float)
 data class JavaString(val myJavaString: java.lang.String)
 
 class SimpleDateConverter : Converter {
@@ -31,7 +32,15 @@ class SimpleDateConverter : Converter {
 	}
 }
 
+class BadIntConverter : Converter {
+	override fun convert(from: String): Int? {
+		// this bad implementation returns 666 regardless of the input
+		return 666
+	}
+}
+
 data class MySimpleDate(@CConverter(converterClass = SimpleDateConverter::class) val myDate: Date)
+data class UnexpectedInteger(@CConverter(converterClass = BadIntConverter::class) val myInt: Int)
 
 class WebFormTests : Spek({
 	describe("when the param map is empty, do nothing and return null") {
@@ -95,6 +104,14 @@ class WebFormTests : Spek({
 			val result: SimpleDouble = form.get() as SimpleDouble
 			assertEquals(myExpectedResult, result.myDouble)
 		}
+		it("conversion when working with Floats") {
+			val myFloat = "23.64"
+			val myExpectedResult: Float = 23.64F
+			request.put("myFloat", myFloat)
+			val form = Form(request, SimpleFloat::class)
+			val result: SimpleFloat = form.get() as SimpleFloat
+			assertEquals(myExpectedResult, result.myFloat)
+		}
 	}
 
 	describe("conversion with an annotated conversion class") {
@@ -111,6 +128,14 @@ class WebFormTests : Spek({
 			val form = Form(request,MySimpleDate::class)
 			val result: MySimpleDate = form.get() as MySimpleDate
 			assertEquals(myExpectedDate,result.myDate)
+		}
+		it("should use the annotated converter in preference to the default converter") {
+			val myNumber = "1"
+			val myExpectedResult = 666
+			request.put("myInt", myNumber)
+			val form = Form(request, UnexpectedInteger::class)
+			val result: UnexpectedInteger = form.get() as UnexpectedInteger
+			assertEquals(myExpectedResult, result.myInt)
 		}
 	}
 })

@@ -2,7 +2,6 @@ package org.liamjd.caisson.webforms
 
 import org.liamjd.caisson.annotations.CConverter
 import org.liamjd.caisson.convertors.*
-import org.liamjd.caisson.org.liamjd.caisson.convertors.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.createInstance
@@ -43,27 +42,21 @@ class Form(val params: RequestParams, val modelClass: KClass<*>) {
 						var converter: Converter? = null
 						when (erasure) {
 							String::class -> {
-								println("I've found a string")
 								finalValue = inputValue
 							}
 							Int::class -> {
-								println("I've found an Int")
 								converter = DefaultIntConverter()
 							}
 							Long::class -> {
-								println("I've found a Long")
 								converter = DefaultLongConverter()
 							}
 							Double::class -> {
-								println("I've found a Double")
 								converter = DefaultDoubleConverter()
 							}
 							Float::class -> {
-								println("I've found a Float")
 								converter = DefaultFloatConverter()
 							}
 							Boolean::class -> {
-								println("I've found a Boolean")
 								converter = DefaultBooleanConverter()
 							}
 							else -> println("I don't know what I have, but I can't handle it")
