@@ -1,3 +1,6 @@
+group 'org.liamjd'
+version '0.0.6-SNAPSHOT'
+
 buildscript {
 
     // declare some versions
@@ -16,9 +19,6 @@ buildscript {
 
     }
 }
-
-group 'org.liamjd'
-version '0.0.3-SNAPSHOT'
 
 // plugins
 apply plugin: 'kotlin'
@@ -70,6 +70,10 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
+
+            artifact sourceJar {
+                classifier "sources"
+            }
         }
     }
 }
@@ -81,3 +85,9 @@ publishing {
         }
     }
 }
+
+// building source jar
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+

@@ -123,7 +123,11 @@ abstract class AbstractController(path: String) {
 		get() {
 			val map = mutableMapOf<String,String>()
 			this.queryParams().forEach {
-				map.put(it,decode(this.queryParams(it)))
+				if(map.contains(it)) {
+					map.get(it)
+				} else {
+					map.put(it, decode(this.queryParams(it)))
+				}
 			}
 			return map as RequestParams
 		}

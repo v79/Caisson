@@ -4,10 +4,7 @@ import org.liamjd.caisson.annotations.CConverter
 import org.liamjd.caisson.convertors.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
-import kotlin.reflect.full.createInstance
-import kotlin.reflect.full.declaredMemberFunctions
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
 typealias RequestParams = Map<String, String>
@@ -24,13 +21,13 @@ class Form(val params: RequestParams, val modelClass: KClass<*>) {
 	lateinit var modelObject: Any
 
 	init {
-		if (params.isNotEmpty()) {
+		if (params != null) {
 			val primaryConstructor = modelClass.primaryConstructor
 
 			val constructorParams: MutableMap<KParameter, Any?> = mutableMapOf()
 			if (primaryConstructor != null) {
 				for (constructorKParam in primaryConstructor.parameters) {
-					val inputValue: String = params.get(constructorKParam.name) ?: "" // I don't ever expect a null here
+					val inputValue: String = params.get(constructorKParam.name) ?: "" // Could be null when it's an unset checkbox
 					var finalValue: Any? = null
 					// 1 - check for a converter
 					val converterAnnotation = constructorKParam.findAnnotation<CConverter>()
@@ -59,7 +56,13 @@ class Form(val params: RequestParams, val modelClass: KClass<*>) {
 							Boolean::class -> {
 								converter = DefaultBooleanConverter()
 							}
-							else -> println("I don't know what I have, but I can't handle it")
+							else -> {
+								// TODO: can I find a generic way of handling enums?
+								println("I can't handle it (it's a ${erasure}, maybe even an Enum ${erasure.isSubclassOf(Enum::class)}?; is final: ${erasure.isFinal})")
+								if(erasure.isSubclassOf(Enum::class)) {
+									println(erasure.primaryConstructor?.parameters?.first())
+								}
+							}
 						}
 						if (converter != null) {
 							finalValue = getConvertedValue(converter, inputValue)
@@ -72,6 +75,8 @@ class Form(val params: RequestParams, val modelClass: KClass<*>) {
 				modelObject = primaryConstructor.callBy(constructorParams)
 
 			}
+		} else {
+			// params is empty, which can happen when a checkbox is unticked
 		}
 
 	}

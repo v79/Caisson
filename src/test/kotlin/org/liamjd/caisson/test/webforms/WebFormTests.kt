@@ -20,6 +20,11 @@ data class SimpleDouble(val myDouble: Double)
 data class SimpleLong(val myLong: Long)
 data class SimpleFloat(val myFloat: Float)
 data class JavaString(val myJavaString: java.lang.String)
+enum class Gender(val gender: String) {
+	male("male"),
+	female("female"),
+	other("other")
+}
 
 class SimpleDateConverter : Converter {
 	override fun convert(from: String): Date? {
@@ -39,11 +44,20 @@ class BadIntConverter : Converter {
 	}
 }
 
+class GenderConverter : Converter {
+	override fun convert(from: String): Gender? {
+		return Gender.valueOf(from)
+	}
+}
+
 data class MySimpleDate(@CConverter(converterClass = SimpleDateConverter::class) val myDate: Date)
 data class UnexpectedInteger(@CConverter(converterClass = BadIntConverter::class) val myInt: Int)
+data class GenderForm(@CConverter(converterClass = GenderConverter::class) val gender: Gender)
+data class UnconvertedGenderForm(val gender: Gender)
 
 class WebFormTests : Spek({
-	describe("when the param map is empty, do nothing and return null") {
+	// not sure about this test scenario
+	/*describe("when the param map is empty, do nothing and return null") {
 		val emptyRequest = mutableMapOf<String, String>()
 		val form = Form(emptyRequest, TestPerson::class)
 
@@ -51,7 +65,7 @@ class WebFormTests : Spek({
 			val generatedModel = form.get()
 			assertNull(generatedModel)
 		}
-	}
+	}*/
 
 	describe("no conversions when working with strings") {
 		val request = mutableMapOf<String, String>()
@@ -137,5 +151,25 @@ class WebFormTests : Spek({
 			val result: UnexpectedInteger = form.get() as UnexpectedInteger
 			assertEquals(myExpectedResult, result.myInt)
 		}
+	}
+
+	describe("conversion with enums") {
+		val request = mutableMapOf<String, String>()
+		it("should use an annotated converter with an enum") {
+			val myGender = "other"
+			val expectedResult = Gender.other
+			request.put("gender",myGender)
+			val form = Form(request,GenderForm::class)
+			val result = form.get() as GenderForm
+			assertEquals(expectedResult,result.gender)
+		}
+		/*it("might be able to work with a reflection-based approach?") {
+			val myGender = "other"
+			val expectedResult = Gender.other
+			request.put("gender",myGender)
+			val form = Form(request,UnconvertedGenderForm::class)
+			val result = form.get() as UnconvertedGenderForm
+			assertEquals(expectedResult,result.gender)
+		}*/
 	}
 })
