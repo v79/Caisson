@@ -7,7 +7,7 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
-typealias RequestParams = Map<String, String>
+typealias RequestParams = Map<String, Array<String>>
 
 class FormField(val key: String, val value: String?)
 
@@ -16,9 +16,9 @@ class FormField(val key: String, val value: String?)
  * Represents the internal data state of an HTML form element. It is generated from a Spark HTML request parameter map
  */
 class Form(val params: RequestParams, val modelClass: KClass<*>) {
-	val fields = mutableSetOf<FormField>()
-	var valid: Boolean = true
-	lateinit var modelObject: Any
+	private val fields = mutableSetOf<FormField>()
+	private var valid: Boolean = true
+	private lateinit var modelObject: Any
 
 	init {
 		if (params != null) {
@@ -27,7 +27,25 @@ class Form(val params: RequestParams, val modelClass: KClass<*>) {
 			val constructorParams: MutableMap<KParameter, Any?> = mutableMapOf()
 			if (primaryConstructor != null) {
 				for (constructorKParam in primaryConstructor.parameters) {
-					val inputValue: String = params.get(constructorKParam.name) ?: "" // Could be null when it's an unset checkbox
+
+					val requestParam = params.get(constructorKParam.name)
+					val inputValue: String
+					val inputList: List<String>
+					if (requestParam != null) {
+						if (requestParam.size == 1) {
+							inputValue = requestParam.get(0)
+							inputList = emptyList()
+						} else {
+							// now we have an array of values, perhaps from a checkbox?
+							inputList = requestParam.toList()
+							inputValue = ""
+						}
+					} else {
+						inputValue = ""
+						inputList = emptyList()
+					}
+
+//					val inputValue: String = params.get(constructorKParam.name) ?: "" // Could be null when it's an unset checkbox
 					var finalValue: Any? = null
 					// 1 - check for a converter
 					val converterAnnotation = constructorKParam.findAnnotation<CConverter>()
@@ -56,6 +74,10 @@ class Form(val params: RequestParams, val modelClass: KClass<*>) {
 							Boolean::class -> {
 								converter = DefaultBooleanConverter()
 							}
+							List::class -> {
+								val listConverter = DefaultListConverter()
+								finalValue = listConverter.convert(inputList)
+							}
 							else -> {
 								// TODO: can I find a generic way of handling enums?
 								println("I can't handle it (it's a ${erasure}, maybe even an Enum ${erasure.isSubclassOf(Enum::class)}?; is final: ${erasure.isFinal})")
@@ -81,10 +103,16 @@ class Form(val params: RequestParams, val modelClass: KClass<*>) {
 
 	}
 
+	/**
+	 * Call the conversion function defined by the Default converter for the given class
+	 */
 	private fun getConvertedValue(converter: Converter, inputValue: String): Any? {
 		return converter.convert(inputValue)
 	}
 
+	/**
+	 * Call the conversion function defined by the CConverter provided in the annotation
+	 */
 	private fun getConvertedValue(cConverter: CConverter, inputValue: String): Any? {
 		var finalValue: Any? = null
 
@@ -98,6 +126,9 @@ class Form(val params: RequestParams, val modelClass: KClass<*>) {
 		return finalValue
 	}
 
+	/**
+	 * Useful debugging toString method
+	 */
 	override fun toString(): String {
 		val sb: StringBuilder = StringBuilder()
 		for (f in fields) {
@@ -108,7 +139,7 @@ class Form(val params: RequestParams, val modelClass: KClass<*>) {
 	}
 
 	/**
-	 * Return the generated model object of the form data
+	 * Return the generated model object of the form data, or null
 	 */
 	fun get(): Any? {
 		if (!::modelObject.isInitialized || modelObject == null) {

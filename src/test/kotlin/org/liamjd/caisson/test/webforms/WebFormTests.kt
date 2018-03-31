@@ -10,7 +10,6 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 data class TestPerson(val name: String, val age: Int)
 data class SimpleString(val myString: String)
@@ -54,6 +53,8 @@ data class MySimpleDate(@CConverter(converterClass = SimpleDateConverter::class)
 data class UnexpectedInteger(@CConverter(converterClass = BadIntConverter::class) val myInt: Int)
 data class GenderForm(@CConverter(converterClass = GenderConverter::class) val gender: Gender)
 data class UnconvertedGenderForm(val gender: Gender)
+data class ColourListForm(val colour: List<String>)
+data class LotteryListForm(val numbers: List<Int>)
 
 class WebFormTests : Spek({
 	// not sure about this test scenario
@@ -68,24 +69,24 @@ class WebFormTests : Spek({
 	}*/
 
 	describe("no conversions when working with strings") {
-		val request = mutableMapOf<String, String>()
-		val myName = "Caisson"
+		val request = mutableMapOf<String, Array<String>>()
+		val myName = arrayOf("Caisson")
 		request.put("myString", myName)
 		it("creates a SimpleString with myName as its value") {
 			val form = Form(request, SimpleString::class)
 			val result: SimpleString = form.get() as SimpleString
-			assertEquals(myName, result.myString)
+			assertEquals(myName.first(), result.myString)
 		}
 	}
 
 	describe("converting the basic Kotlin types") {
-		val request = mutableMapOf<String, String>()
+		val request = mutableMapOf<String, Array<String>>()
 
 		beforeEachTest { request.clear() }
 
 		it("conversion when working with Integers") {
-			val myNumber = "669"
-			val myExpectedResult = myNumber.toInt()
+			val myNumber = arrayOf("669")
+			val myExpectedResult = myNumber.first().toInt()
 			request.put("myNumber", myNumber)
 			val form = Form(request, SimpleInt::class)
 			val result: SimpleInt = form.get() as SimpleInt
@@ -93,7 +94,7 @@ class WebFormTests : Spek({
 		}
 
 		it("conversion when working with Longs") {
-			val myLongNumber = "1551441414479"
+			val myLongNumber = arrayOf("1551441414479")
 			val myExpectedResult: Long = 1551441414479L
 			request.put("myLong", myLongNumber)
 			val form = Form(request, SimpleLong::class)
@@ -102,7 +103,7 @@ class WebFormTests : Spek({
 		}
 
 		it("conversion when working with Booleans") {
-			val myBoolean = "true"
+			val myBoolean = arrayOf("true")
 			val myExpectedResult = true
 			request.put("myBoolean", myBoolean)
 			val form = Form(request, SimpleBool::class)
@@ -111,7 +112,7 @@ class WebFormTests : Spek({
 		}
 
 		it("conversion when working with Doubles") {
-			val myDouble = "5.5"
+			val myDouble = arrayOf("5.5")
 			val myExpectedResult = 5.5
 			request.put("myDouble", myDouble)
 			val form = Form(request, SimpleDouble::class)
@@ -119,7 +120,7 @@ class WebFormTests : Spek({
 			assertEquals(myExpectedResult, result.myDouble)
 		}
 		it("conversion when working with Floats") {
-			val myFloat = "23.64"
+			val myFloat = arrayOf("23.64")
 			val myExpectedResult: Float = 23.64F
 			request.put("myFloat", myFloat)
 			val form = Form(request, SimpleFloat::class)
@@ -129,9 +130,9 @@ class WebFormTests : Spek({
 	}
 
 	describe("conversion with an annotated conversion class") {
-		val request = mutableMapOf<String, String>()
+		val request = mutableMapOf<String, Array<String>>()
 		it("should convert a date with the dd/MM/yyyy format") {
-			val myDate = "06/04/2002"
+			val myDate = arrayOf("06/04/2002")
 			val cal = Calendar.getInstance()
 			cal.clear()
 			cal.set(Calendar.YEAR,2002)
@@ -144,7 +145,7 @@ class WebFormTests : Spek({
 			assertEquals(myExpectedDate,result.myDate)
 		}
 		it("should use the annotated converter in preference to the default converter") {
-			val myNumber = "1"
+			val myNumber = arrayOf("1")
 			val myExpectedResult = 666
 			request.put("myInt", myNumber)
 			val form = Form(request, UnexpectedInteger::class)
@@ -154,9 +155,9 @@ class WebFormTests : Spek({
 	}
 
 	describe("conversion with enums") {
-		val request = mutableMapOf<String, String>()
+		val request = mutableMapOf<String, Array<String>>()
 		it("should use an annotated converter with an enum") {
-			val myGender = "other"
+			val myGender = arrayOf("other")
 			val expectedResult = Gender.other
 			request.put("gender",myGender)
 			val form = Form(request,GenderForm::class)
@@ -171,5 +172,18 @@ class WebFormTests : Spek({
 			val result = form.get() as UnconvertedGenderForm
 			assertEquals(expectedResult,result.gender)
 		}*/
+	}
+
+	describe("conversion with lists") {
+		val request = mutableMapOf<String, Array<String>>()
+		it("should populate a list of strings") {
+			val myColours = arrayOf("red","green")
+			request.put("colour",myColours)
+			val form = Form(request,ColourListForm::class)
+			val result = form.get() as ColourListForm
+			// not going to make an assumption based on order
+			assertEquals(myColours.size,result.colour.size)
+		}
+
 	}
 })

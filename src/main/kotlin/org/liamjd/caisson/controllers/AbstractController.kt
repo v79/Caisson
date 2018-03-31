@@ -102,6 +102,12 @@ abstract class AbstractController(path: String) {
 		}
 	}
 
+	fun debugQueryParams(request: Request) {
+		request.queryParams().forEach {
+			logger.debug("QueryParam ${it}")
+		}
+	}
+
 	fun debugSplat(request: Request) {
 		for (s in request.splat()) {
 			logger.info("Splat -> $s")
@@ -116,6 +122,21 @@ abstract class AbstractController(path: String) {
 		logger.info("FLASH: " + request.session().attribute("flash"))
 	}
 
+	fun debugRequestMap(request: Request) {
+		request.toMap.forEach {
+			println("\t$it")
+		}
+	}
+
+	fun debugQueryMap(request: Request) {
+		request.queryMap().toMap().forEach {
+			print("\tqueryMap to map ${it.key} -> ${it.value}")
+			it.value.forEach {
+				print("\t\t ${it}")
+			}
+			println()
+		}
+	}
 	/**
 	 * Extension function to convert request.queryParams into a nice map
 	 */
