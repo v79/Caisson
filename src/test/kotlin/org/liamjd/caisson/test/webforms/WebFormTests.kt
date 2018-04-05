@@ -55,6 +55,8 @@ data class GenderForm(@CConverter(converterClass = GenderConverter::class) val g
 data class UnconvertedGenderForm(val gender: Gender)
 data class ColourListForm(val colour: List<String>)
 data class LotteryListForm(val numbers: List<Int>)
+data class Person(val name: String, val age: Int)
+data class BirthdayPerson(val name: String, @CConverter(SimpleDateConverter::class) val dob: Date)
 
 class WebFormTests : Spek({
 	// not sure about this test scenario
@@ -151,6 +153,36 @@ class WebFormTests : Spek({
 			val form = Form(request, UnexpectedInteger::class)
 			val result: UnexpectedInteger = form.get() as UnexpectedInteger
 			assertEquals(myExpectedResult, result.myInt)
+		}
+	}
+
+	describe("conversion multiple params") {
+		val request = mutableMapOf<String, Array<String>>()
+		it("should create a Person given a name and an age") {
+			val name = "Liam"
+			val age = "18"
+			request.put("name", arrayOf(name))
+			request.put("age", arrayOf(age))
+			val form = Form(request,Person::class)
+			val result = form.get() as Person
+			assertEquals(name,result.name)
+			assertEquals(age.toInt(),result.age)
+		}
+		it("should convert a basic value and an annotated converter value") {
+			val name = "Liam"
+			val dob = "06/04/2002"
+			val cal = Calendar.getInstance()
+			cal.clear()
+			cal.set(Calendar.YEAR,2002)
+			cal.set(Calendar.MONTH,Calendar.APRIL)
+			cal.set(Calendar.DAY_OF_MONTH,6)
+			val myExpectedDate: Date = cal.time
+			request.put("name", arrayOf(name))
+			request.put("dob", arrayOf(dob))
+			val form = Form(request,BirthdayPerson::class)
+			val result = form.get() as BirthdayPerson
+			assertEquals(name,result.name)
+			assertEquals(myExpectedDate,result.dob)
 		}
 	}
 
