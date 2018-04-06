@@ -2,6 +2,7 @@ package org.liamjd.caisson.webforms
 
 import org.liamjd.caisson.annotations.CConverter
 import org.liamjd.caisson.convertors.*
+import org.liamjd.caisson.models.CaissonMultipartContent
 import javax.servlet.http.HttpServletRequest
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
@@ -23,18 +24,28 @@ class Form {
 	private val raw: HttpServletRequest?
 	private val modelClass: KClass<*>
 	private var valid: Boolean = true
+	private val multiPartUploadNames: List<String>?
 	private lateinit var modelObject: Any
 
 	constructor(params: RequestParams, modelClass: KClass<*>) {
 		this.params = params
 		this.modelClass = modelClass
 		this.raw = null
+		this.multiPartUploadNames = null
 	}
 
-	constructor(servletRequest: HttpServletRequest, modelClass: KClass<*>) {
+	constructor(servletRequest: HttpServletRequest, modelClass: KClass<*>, partNames: String) {
 		this.params = mapOf()
 		this.modelClass = modelClass
 		this.raw = servletRequest
+		this.multiPartUploadNames = listOf(partNames)
+	}
+
+	constructor(servletRequest: HttpServletRequest, modelClass: KClass<*>, partNames: List<String>) {
+		this.params = mapOf()
+		this.modelClass = modelClass
+		this.raw = servletRequest
+		this.multiPartUploadNames = partNames
 	}
 
 	/**
@@ -46,12 +57,13 @@ class Form {
 
 		val constructorParams: MutableMap<KParameter, Any?> = mutableMapOf()
 		if (primaryConstructor != null) {
+			var finalValue: Any? = null
 
 			for (constructorKParam in primaryConstructor.parameters) {
+				val inputValue: String
+				val inputList: List<String>
 				if (params.isNotEmpty()) {
 					val requestParam = params.get(constructorKParam.name)
-					val inputValue: String
-					val inputList: List<String>
 					if (requestParam != null) {
 						if (requestParam.size == 1) {
 							inputValue = requestParam.get(0)
@@ -65,9 +77,34 @@ class Form {
 						inputValue = ""
 						inputList = emptyList()
 					}
+				} else {
+					// params is empty but we could have a CaissonMultipartContent?
+					inputValue = ""
+					inputList = emptyList()
+					val erasure = constructorKParam.type.jvmErasure
+					when(erasure) {
+						CaissonMultipartContent::class -> {
+							println("We've got a multi part document uploady thingy")
+							if(raw != null && multiPartUploadNames != null) {
+								// TODO: handle multiple file uploads
+								val multiPartFormConverter: MultipartUploadConverter = MultipartUploadConverter()
+								finalValue = multiPartFormConverter.convert(raw,multiPartUploadNames.first())
+							} else {
+								// throw exception here?
+								finalValue = null
+								println("We've got a multiPartFormConverter but no HttpServletRequest!")
+							}
+						}
+						else -> {
+							// throw an exception?
+							println("Don't know what to do here")
+						}
+					}
 
-					var finalValue: Any? = null
-					// 1 - check for a converter
+				}
+
+				// will be null unless the multipart converter has kicked in
+				if(finalValue == null) {
 					val converterAnnotation = constructorKParam.findAnnotation<CConverter>()
 					if (converterAnnotation != null) {
 						// convert it using the annotated converter
@@ -76,16 +113,18 @@ class Form {
 						// attempt to convert from a basic internal type
 						finalValue = getBasicValue(constructorKParam, inputValue, inputList)
 					}
-					constructorParams.put(constructorKParam, finalValue)
-				} else {
-					// params is null here, could just be a multipart form only
 				}
-			} // end for
-			// finally, construct the object
-			modelObject = primaryConstructor.callBy(constructorParams)
-		} else {
-			// if primary constructor is null?
+				constructorParams.put(constructorKParam, finalValue)
+			}
+		} // end constructor param for loop
+
+		// finally, construct the object
+		primaryConstructor?.let {
+			modelObject = it.callBy(constructorParams)
 		}
+//		if(primaryConstructor != null) {
+//			modelObject = primaryConstructor.
+//		}
 
 		if (!::modelObject.isInitialized || modelObject == null) {
 			return null
@@ -97,7 +136,7 @@ class Form {
 	 * If no annotated converter class is provided for the parameter, attempt to convert it though basic in-built
 	 * classes. This handles Strings, Ints, Doubles, Longs, Floats, Booleans, Lists. Returns null if no conversion is possible.
 	 */
-	private fun getBasicValue(constructorKParam: KParameter, inputValue: String, inputList: List<String>): Any? {
+	private fun getBasicValue(constructorKParam: KParameter, inputValue: String, inputList: List<String>, servletRequest: HttpServletRequest? = null): Any? {
 		val erasure = constructorKParam.type.jvmErasure
 		var converter: Converter? = null
 		var finalValue: Any? = null
@@ -123,6 +162,17 @@ class Form {
 			List::class -> {
 				val listConverter = DefaultListConverter()
 				finalValue = listConverter.convert(inputList)
+			}
+			CaissonMultipartContent::class -> {
+				println("We've got a multi part document uploady thingy")
+				if(servletRequest != null) {
+					val multiPartFormConverter: MultipartUploadConverter = MultipartUploadConverter()
+					finalValue = multiPartFormConverter.convert(servletRequest,"upload")
+				} else {
+					// throw exception here?
+					finalValue = null
+				}
+
 			}
 			else -> {
 				// TODO: can I find a generic way of handling enums?

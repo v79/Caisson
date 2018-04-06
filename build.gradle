@@ -1,5 +1,5 @@
 group 'org.liamjd'
-version '0.1.5-SNAPSHOT'
+version '0.1.10-SNAPSHOT'
 
 buildscript {
 
@@ -50,7 +50,7 @@ dependencies {
         // exclude kotlin from spek, so that we can use the newest version
         exclude group: 'org.jetbrains.kotlin'
     }
-
+    testCompile "io.mockk:mockk:1.7.15"
     testRuntime("org.jetbrains.spek:spek-junit-platform-engine:${spek_version}") {
         // exclude junit and kotlin from the engine, so we can use our own versions
         exclude group: 'org.junit.platform'

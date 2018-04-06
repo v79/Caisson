@@ -6,7 +6,7 @@ An MVC Framework for the Spark-Kotlin project
 Users of the library will be able to write code something like this:
 
 ```kotlin
-data class Person(val name:Date, @CConverter(converterClass = SimpleDateConverter::class) val date: Date)
+data class Person(val name:String, @CConverter(converterClass = SimpleDateConverter::class) val date: Date)
 
 class SimpleDateConverter : Converter {
 	override fun convert(from: String): Date? {
