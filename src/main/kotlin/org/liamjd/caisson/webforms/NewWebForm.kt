@@ -9,7 +9,6 @@ import javax.servlet.MultipartConfigElement
 import javax.servlet.http.HttpServletRequest
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
-import kotlin.reflect.KType
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.findAnnotation
@@ -77,20 +76,20 @@ class NewWebForm(sparkRequest: Request, modelClass: KClass<*>) {
 			// if there is an annotated Converter, use it
 			val converterAnnotation = kParam.findAnnotation<CConverter>()
 			if (converterAnnotation != null) {
-				constructorParams.put(kParam, getAnnotatedConverterValue(converterAnnotation,inputValue))
+				constructorParams.put(kParam, getAnnotatedConverterValue(converterAnnotation, inputValue))
 			} else {
 				when (erasure) {
 					CaissonMultipartContent::class -> {
 						// if CaissonMultipartContent, handle file uploads
-						if(raw == null){
+						if (raw == null) {
 							throw Exception("Caisson cannot parse this CaissonMultipartContent as the raw servlet request was null")
 						}
-						if(multiPartUploadNames == null) {
+						if (multiPartUploadNames == null) {
 							throw Exception("Caisson cannot parse this CaissonMultipartContent the input part names are null")
 						}
 						logger.info("Extracting file information from Multipart request for ${kParam.name}")
 						val multiPartFiles = getMultiPartFile(raw, multiPartUploadNames!!)
-						if(multiPartFiles.size > 0 && multiPartFiles.size < 2) {
+						if (multiPartFiles.size > 0 && multiPartFiles.size < 2) {
 							constructorParams.put(kParam, multiPartFiles[0])
 						} else {
 							constructorParams.put(kParam, multiPartFiles)
@@ -101,24 +100,20 @@ class NewWebForm(sparkRequest: Request, modelClass: KClass<*>) {
 						// deal with lists
 
 						logger.info("We have a list. We need to extract the generic type and call the appropriate converter.")
-						if(kParam.type.arguments.size > 1) {
+						if (kParam.type.arguments.size > 1) {
 							throw Exception("How could a List<*> ever have more than on argument?")
 						}
 						// Now this starts to get a bit recursive...
-						println(kParam.type.arguments.first().type)
-
-						when(kParam.type.arguments.first().type?.jvmErasure) {
-							// If it's a list of files, there's nothing we need to do. Our function can return a list of files already
+						when (kParam.type.arguments.first().type?.jvmErasure) {
+						// If it's a list of files, there's nothing we need to do. Our function can return a list of files already
 							CaissonMultipartContent::class -> {
-								val multiPartFiles = getMultiPartFile(servletRequest = raw!!,partNames = multiPartUploadNames!!)
+								val multiPartFiles = getMultiPartFile(servletRequest = raw!!, partNames = multiPartUploadNames!!)
 								constructorParams.put(kParam, multiPartFiles)
 							}
 							else -> {
 								logger.error("I don't know how to process a List of ${kParam.type.arguments.first().type}")
 							}
 						}
-
-
 
 
 					}
@@ -234,17 +229,16 @@ class NewWebForm(sparkRequest: Request, modelClass: KClass<*>) {
 			servletRequest.setAttribute("org.eclipse.jetty.multipartConfig", multipartConfigElement)
 		}
 
-		for(partN in partNames) {
-			logger.info("Looking for part $partN - found ${servletRequest.getPart(partN)}")
-			fileList.add(multiPartFormConverter.convert(servletRequest.getPart(partN)))
+		// it's possible to have mulitple parts with the same name
+		// instead, loop round servletRequest.parts and check each name in turn
+		for (part in servletRequest.parts) {
+			logger.info("Checking part $part to see if it matches one of the part names $partNames")
+			if (part.name in partNames) {
+				fileList.add(multiPartFormConverter.convert(part))
+			}
 		}
 
 		return fileList
-
 	}
 
-
-	private fun processList(kParam: KParameter, type: KType?) {
-
-	}
 }
