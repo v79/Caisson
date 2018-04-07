@@ -1,12 +1,17 @@
 package org.liamjd.caisson.test.webforms
 
+import io.mockk.every
+import io.mockk.mockk
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.liamjd.caisson.annotations.CConverter
 import org.liamjd.caisson.convertors.Converter
 import org.liamjd.caisson.webforms.Form
+import spark.QueryParamsMap
+import spark.Request
 import java.util.*
+import javax.servlet.http.HttpServletRequest
 import kotlin.test.assertEquals
 
 data class TestPerson(val name: String, val age: Int)
@@ -46,38 +51,40 @@ data class APerson(val name: String, val age: Int)
 data class BirthdayPerson(val name: String, @CConverter(SimpleDateConverter::class) val dob: Date)
 
 class WebFormTests : Spek({
-	// not sure about this test scenario
-	/*describe("when the param map is empty, do nothing and return null") {
-		val emptyRequest = mutableMapOf<String, String>()
-		val form = Form(emptyRequest, TestPerson::class)
 
-		it("returns null with empty map") {
-			val generatedModel = form.get()
-			assertNull(generatedModel)
-		}
-	}*/
+	val mSparkRequest = mockk<Request>()
+	val mRaw = mockk<HttpServletRequest>()
+	val paramsMap: Map<String, List<String>>
+	val mSparkQueryMap = mockk<QueryParamsMap>()
+	val map = mutableMapOf<String, Array<String>>()
+	val requestMap = mutableMapOf<String, Array<String>>()
+
+	every { mSparkRequest.queryMap() } returns mSparkQueryMap
+	every { mSparkQueryMap.toMap()} returns requestMap
+	every { mSparkRequest.raw()} returns null
+
+	beforeEachTest {
+		requestMap.clear()
+	}
 
 	describe("no conversions when working with strings") {
-		val requestMap = mutableMapOf<String, Array<String>>()
+
 		val myName = arrayOf("Caisson")
-		requestMap.put("myString", myName)
 		it("creates a SimpleString with myName as its value") {
-			val form = Form(requestMap, SimpleString::class)
+			requestMap.put("myString", myName)
+			val form = Form(mSparkRequest, SimpleString::class)
 			val result: SimpleString = form.get() as SimpleString
 			assertEquals(myName.first(), result.myString)
 		}
 	}
 
 	describe("converting the basic Kotlin types") {
-		val requestMap = mutableMapOf<String, Array<String>>()
-
-		beforeEachTest { requestMap.clear() }
 
 		it("conversion when working with Integers") {
 			val myNumber = arrayOf("669")
 			val myExpectedResult = myNumber.first().toInt()
 			requestMap.put("myNumber", myNumber)
-			val form = Form(requestMap, SimpleInt::class)
+			val form = Form(mSparkRequest, SimpleInt::class)
 			val result: SimpleInt = form.get() as SimpleInt
 			assertEquals(myExpectedResult, result.myNumber)
 		}
@@ -86,7 +93,7 @@ class WebFormTests : Spek({
 			val myLongNumber = arrayOf("1551441414479")
 			val myExpectedResult: Long = 1551441414479L
 			requestMap.put("myLong", myLongNumber)
-			val form = Form(requestMap, SimpleLong::class)
+			val form = Form(mSparkRequest, SimpleLong::class)
 			val result: SimpleLong = form.get() as SimpleLong
 			assertEquals(myExpectedResult, result.myLong)
 		}
@@ -95,7 +102,7 @@ class WebFormTests : Spek({
 			val myBoolean = arrayOf("true")
 			val myExpectedResult = true
 			requestMap.put("myBoolean", myBoolean)
-			val form = Form(requestMap, SimpleBool::class)
+			val form = Form(mSparkRequest, SimpleBool::class)
 			val result: SimpleBool = form.get() as SimpleBool
 			assertEquals(myExpectedResult, result.myBoolean)
 		}
@@ -104,7 +111,7 @@ class WebFormTests : Spek({
 			val myDouble = arrayOf("5.5")
 			val myExpectedResult = 5.5
 			requestMap.put("myDouble", myDouble)
-			val form = Form(requestMap, SimpleDouble::class)
+			val form = Form(mSparkRequest, SimpleDouble::class)
 			val result: SimpleDouble = form.get() as SimpleDouble
 			assertEquals(myExpectedResult, result.myDouble)
 		}
@@ -112,14 +119,13 @@ class WebFormTests : Spek({
 			val myFloat = arrayOf("23.64")
 			val myExpectedResult: Float = 23.64F
 			requestMap.put("myFloat", myFloat)
-			val form = Form(requestMap, SimpleFloat::class)
+			val form = Form(mSparkRequest, SimpleFloat::class)
 			val result: SimpleFloat = form.get() as SimpleFloat
 			assertEquals(myExpectedResult, result.myFloat)
 		}
 	}
 
 	describe("conversion with an annotated conversion class") {
-		val requestMap = mutableMapOf<String, Array<String>>()
 		it("should convert a date with the dd/MM/yyyy format") {
 			val myDate = arrayOf("06/04/2002")
 			val cal = Calendar.getInstance()
@@ -129,7 +135,7 @@ class WebFormTests : Spek({
 			cal.set(Calendar.DAY_OF_MONTH,6)
 			val myExpectedDate: Date = cal.time
 			requestMap.put("myDate",myDate)
-			val form = Form(requestMap,MySimpleDate::class)
+			val form = Form(mSparkRequest,MySimpleDate::class)
 			val result: MySimpleDate = form.get() as MySimpleDate
 			assertEquals(myExpectedDate,result.myDate)
 		}
@@ -137,20 +143,19 @@ class WebFormTests : Spek({
 			val myNumber = arrayOf("1")
 			val myExpectedResult = 666
 			requestMap.put("myInt", myNumber)
-			val form = Form(requestMap, UnexpectedInteger::class)
+			val form = Form(mSparkRequest, UnexpectedInteger::class)
 			val result: UnexpectedInteger = form.get() as UnexpectedInteger
 			assertEquals(myExpectedResult, result.myInt)
 		}
 	}
 
 	describe("conversion multiple params") {
-		val requestMap = mutableMapOf<String, Array<String>>()
 		it("should create a Person given a name and an age") {
 			val name = "Liam"
 			val age = "18"
 			requestMap.put("name", arrayOf(name))
 			requestMap.put("age", arrayOf(age))
-			val form = Form(requestMap,APerson::class)
+			val form = Form(mSparkRequest,APerson::class)
 			val result = form.get() as APerson
 			assertEquals(name,result.name)
 			assertEquals(age.toInt(),result.age)
@@ -166,7 +171,7 @@ class WebFormTests : Spek({
 			val myExpectedDate: Date = cal.time
 			requestMap.put("name", arrayOf(name))
 			requestMap.put("dob", arrayOf(dob))
-			val form = Form(requestMap,BirthdayPerson::class)
+			val form = Form(mSparkRequest,BirthdayPerson::class)
 			val result = form.get() as BirthdayPerson
 			assertEquals(name,result.name)
 			assertEquals(myExpectedDate,result.dob)
@@ -174,12 +179,11 @@ class WebFormTests : Spek({
 	}
 
 	describe("conversion with enums") {
-		val requestMap = mutableMapOf<String, Array<String>>()
 		it("should use an annotated converter with an enum") {
 			val myGender = arrayOf("other")
 			val expectedResult = Gender.other
 			requestMap.put("gender",myGender)
-			val form = Form(requestMap,GenderForm::class)
+			val form = Form(mSparkRequest,GenderForm::class)
 			val result = form.get() as GenderForm
 			assertEquals(expectedResult,result.gender)
 		}
@@ -194,11 +198,10 @@ class WebFormTests : Spek({
 	}
 
 	describe("conversion with lists") {
-		val requestMap = mutableMapOf<String, Array<String>>()
 		it("should populate a list of strings") {
 			val myColours = arrayOf("red","green")
 			requestMap.put("colour",myColours)
-			val form = Form(requestMap,ColourListForm::class)
+			val form = Form(mSparkRequest,ColourListForm::class)
 			val result = form.get() as ColourListForm
 			// not going to make an assumption based on order
 			assertEquals(myColours.size,result.colour.size)

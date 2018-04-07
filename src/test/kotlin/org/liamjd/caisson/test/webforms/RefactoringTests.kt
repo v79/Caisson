@@ -7,7 +7,7 @@ import io.mockk.mockk
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import org.liamjd.caisson.webforms.NewWebForm
+import org.liamjd.caisson.webforms.Form
 import spark.QueryParamsMap
 import spark.Request
 import java.util.*
@@ -44,7 +44,7 @@ class NewTests : Spek({
 		it("Person has a string and an annotated converter") {
 			map.put("name", arrayOf(name))
 			map.put("dob", arrayOf(dob))
-			val person: Person = NewWebForm(mSparkRequest, Person::class).get() as Person
+			val person: Person = Form(mSparkRequest, Person::class).get() as Person
 
 			assertEquals(name, person.name)
 			assertEquals(calendar.time, person.dob)
@@ -76,7 +76,7 @@ class NewTests : Spek({
 			every { mRaw.getPart(uploadPhoto) } returns photoPart
 			every { mRaw.parts } returns arrayListOf(photoPart)
 
-			val photograph = NewWebForm(mSparkRequest, Photograph::class, uploadPhoto).get() as Photograph
+			val photograph = Form(mSparkRequest, Photograph::class, uploadPhoto).get() as Photograph
 			assertEquals(uploadPhoto, photoPart.name)
 			assertEquals("img/jpg", photoPart.contentType)
 			assertEquals(123L, photoPart.size)
@@ -100,7 +100,7 @@ class NewTests : Spek({
 			every { doc2Part.submittedFileName } returns "/c/folder/solictor.pdf"
 			every { doc2Part.inputStream } returns bytes.inputStream()
 
-			val legalDocuments = NewWebForm(mSparkRequest, LegalDocuments::class, arrayListOf(uploadDoc)).get() as LegalDocuments
+			val legalDocuments = Form(mSparkRequest, LegalDocuments::class, arrayListOf(uploadDoc)).get() as LegalDocuments
 
 			assertEquals(2, legalDocuments.docs.size)
 
@@ -123,7 +123,7 @@ class NewTests : Spek({
 			every { doc2Part.submittedFileName } returns "/c/folder/solictor.pdf"
 			every { doc2Part.inputStream } returns bytes.inputStream()
 
-			val legalDocuments2 = NewWebForm(mSparkRequest, LegalDocuments::class, uploadManyDocs).get() as LegalDocuments
+			val legalDocuments2 = Form(mSparkRequest, LegalDocuments::class, uploadManyDocs).get() as LegalDocuments
 		}
 	}
 })

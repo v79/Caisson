@@ -15,9 +15,11 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.jvmErasure
 
-class NewWebForm(sparkRequest: Request, modelClass: KClass<*>) {
+typealias RequestParams = Map<String, Array<String>>
 
-	val logger = LoggerFactory.getLogger(NewWebForm::class.java)
+class Form(sparkRequest: Request, modelClass: KClass<*>) {
+
+	val logger = LoggerFactory.getLogger(Form::class.java)
 
 	private val paramsMap: RequestParams
 	private val raw: HttpServletRequest?
@@ -39,7 +41,9 @@ class NewWebForm(sparkRequest: Request, modelClass: KClass<*>) {
 		this.raw = sparkRequest.raw()
 	}
 
-
+	/**
+	 * Generate an object with the given `KClass`, populating all of its primary constructor parameters
+	 */
 	fun get(): Any? {
 		val primaryConstructor = modelClass.primaryConstructor
 		val constructorParams: MutableMap<KParameter, Any?> = mutableMapOf()
@@ -105,6 +109,10 @@ class NewWebForm(sparkRequest: Request, modelClass: KClass<*>) {
 						}
 						// Now this starts to get a bit recursive...
 						when (kParam.type.arguments.first().type?.jvmErasure) {
+							// list of strings for checkboxes, etc
+							String::class -> {
+								constructorParams.put(kParam,inputList)
+							}
 						// If it's a list of files, there's nothing we need to do. Our function can return a list of files already
 							CaissonMultipartContent::class -> {
 								val multiPartFiles = getMultiPartFile(servletRequest = raw!!, partNames = multiPartUploadNames!!)
