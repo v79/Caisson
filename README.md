@@ -30,4 +30,27 @@ post("/addPerson") {
 }
 ```
 
+## File uploads
+
+To implement file uploading, your model class must contain a field of type `CaissonMultipartContent` (or a List of these). **Caisson** will store each of the uploaded files' bytestreams in the `CaissonMultipartContent` object:
+
+```kotlin
+data class MyFiles(val upload: List<MultipartCaissonContent>)
+```
+
+And use these classes with Spark-Kotlin's normal request object. YOu must specify the names of the HTML input components used.
+
+```HTML
+&lt;form name="fileUpload"&gt
+  &lt;input type="file" name="upload"&gt;
+  &lt;input type="file" name="upload"&gt;
+&lt/form&gt;
+```
+
+```kotlin
+val myFiles = Form(request, MyFiles::class, "upload").get() as MyFiles
+```
+
+Alternatively, if each input component has a different name, supply a List of their names as the third parameter.
+
 This project is in the very earliest stages, and I have a lot to learn about Kotlin, HTTP requests, Reflection and more besides. So don't even think of using it :)
