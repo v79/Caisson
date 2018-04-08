@@ -38,7 +38,7 @@ To implement file uploading, your model class must contain a field of type `Cais
 data class MyFiles(val upload: List<MultipartCaissonContent>)
 ```
 
-And use these classes with Spark-Kotlin's normal request object. YOu must specify the names of the HTML input components used.
+And use these classes with Spark-Kotlin's normal request object. You must specify the names of the HTML input components used.
 
 ```HTML
 &lt;form name="fileUpload"&gt
