@@ -17,7 +17,7 @@ class SimpleDateConverter : Converter {
 		try {
 			return sdf.parse(from)
 		} catch (e: ParseException) {
-			return Date()
+			return null
 		}
 	}
 }

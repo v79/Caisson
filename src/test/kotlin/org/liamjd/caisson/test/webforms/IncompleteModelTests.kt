@@ -7,11 +7,13 @@ import io.mockk.mockk
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import org.liamjd.caisson.Exceptions.CaissonBindException
 import org.liamjd.caisson.webforms.WebForm
 import spark.QueryParamsMap
 import spark.Request
 import javax.servlet.http.HttpServletRequest
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 /**
@@ -34,10 +36,10 @@ class IncompleteModelTests: Spek( {
 	afterEachTest { map.clear() }
 
 	describe("Model class has constructor fields which are not in the request params") {
-		val used = "I am here"
-		val usedNumber = "999";
 
 		it("Should create a UnusedFieldsTest given only the first String and Int") {
+			val used = "I am here"
+			val usedNumber = "999";
 			map.put("used", arrayOf(used))
 			map.put("usedNumber", arrayOf(usedNumber))
 			val unusedFieldsTest: UnusedFieldsTest = WebForm(mSparkRequest, UnusedFieldsTest::class).get() as UnusedFieldsTest
@@ -46,6 +48,16 @@ class IncompleteModelTests: Spek( {
 			assertEquals(used,unusedFieldsTest.used)
 			assertEquals(usedNumber.toInt(), unusedFieldsTest.usedNumber)
 			assertNotNull(unusedFieldsTest.unusedInt)
+		}
+
+		it("Should fail when not providing a value which should be converted by an annotated converter") {
+			val name = "Liam"
+			// not providing a dob value here
+			map.put("name", arrayOf(name))
+
+			assertFailsWith<CaissonBindException> {
+				val incompletePerson = WebForm(mSparkRequest, BirthdayPerson::class).get() as BirthdayPerson
+			}
 		}
 	}
 

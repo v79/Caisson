@@ -1,10 +1,12 @@
 package org.liamjd.caisson.webforms
 
+import org.liamjd.caisson.Exceptions.CaissonBindException
 import org.liamjd.caisson.annotations.CConverter
 import org.liamjd.caisson.convertors.*
 import org.liamjd.caisson.models.CaissonMultipartContent
 import org.slf4j.LoggerFactory
 import spark.Request
+import java.lang.reflect.InvocationTargetException
 import javax.servlet.MultipartConfigElement
 import javax.servlet.http.HttpServletRequest
 import kotlin.reflect.KClass
@@ -64,7 +66,6 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 			val inputValue: String
 			val inputList: List<String>
 			val converter: Converter?
-
 
 			if (requestParamValues == null) {
 				inputValue = ""
@@ -172,7 +173,13 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 				logger.info("..... ${it.key} -> ${it.value}")
 			}
 			logger.info("expecting ${primaryConstructor.parameters}")
-			modelObject = it.callBy(constructorParams)
+			try {
+				modelObject = it.callBy(constructorParams)
+			} catch (ite: InvocationTargetException) {
+				logger.error("Invocation Target Exception while building ${modelClass.simpleName}")
+				logger.error(ite.targetException.message)
+				throw CaissonBindException(ite.targetException.message)
+			}
 		}
 
 		if (!::modelObject.isInitialized || modelObject == null) {
