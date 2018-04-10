@@ -7,6 +7,9 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * A bunch of model classes used in testing
+ */
 
 class SimpleDateConverter : Converter {
 	override fun convert(from: String): Date? {
@@ -24,3 +27,5 @@ data class Person(val name: String, @CConverter(converterClass = SimpleDateConve
 data class Photograph(val picture: CaissonMultipartContent)
 
 data class LegalDocuments(val docs: List<CaissonMultipartContent>)
+
+data class UnusedFieldsTest(val used: String, val usedNumber: Int, val unusedInt: Int)

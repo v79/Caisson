@@ -1,5 +1,4 @@
 package org.liamjd.spark.templates.thymeleaf;
-
 /*
  * Copyright 2015 - Per Wendel
  *
@@ -26,8 +25,10 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
 import spark.ModelAndView;
 import spark.TemplateEngine;
 
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Defaults to the 'templates' directory under the resource path
@@ -103,6 +104,21 @@ public class ThymeleafTemplateEngine extends TemplateEngine {
     }
 
     /**
+     * Process the specified template and the fragment with the given name.
+     * Output will be written into a String that will be returned from calling this method,
+     * ocne template processing has finished
+     *
+     * @param modelAndView model and view
+     * @param fragment     a th:fragment component of the page
+     * @return processed template
+     */
+    public String render(ModelAndView modelAndView, String fragment) {
+        Set<String> fragments = new HashSet<String>();
+        fragments.add(fragment);
+        return render(modelAndView, fragments, Locale.getDefault());
+    }
+
+    /**
      * Process the specified template (usually the template name).
      * Output will be written into a String that will be returned from calling this method,
      * once template processing has finished.
@@ -118,6 +134,28 @@ public class ThymeleafTemplateEngine extends TemplateEngine {
             Context context = new Context(locale);
             context.setVariables((Map<String, Object>) model);
             return templateEngine.process(modelAndView.getViewName(), context);
+        } else {
+            throw new IllegalArgumentException("modelAndView.getModel() must return a java.util.Map");
+        }
+    }
+
+    /**
+     * Process the specified template and the fragment with the given name.
+     * Output will be written into a String that will be returned from calling this method,
+     * ocne template processing has finished
+     *
+     * @param modelAndView model and view
+     * @param fragments    a Set of th:fragment components of the page
+     * @param locale       A Locale object represents a specific geographical, political, or cultural region
+     * @return processed template
+     */
+    public String render(ModelAndView modelAndView, Set<String> fragments, Locale locale) {
+        Object model = modelAndView.getModel();
+
+        if (model instanceof Map) {
+            Context context = new Context(locale);
+            context.setVariables((Map<String, Object>) model);
+            return templateEngine.process(modelAndView.getViewName(), fragments, context);
         } else {
             throw new IllegalArgumentException("modelAndView.getModel() must return a java.util.Map");
         }

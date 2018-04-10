@@ -21,7 +21,7 @@ abstract class AbstractController(path: String) {
 
 	private val FLASH_COUNT_MAX = 3
 
-	open val logger = LoggerFactory.getLogger(AbstractController::class.java)
+	internal open val logger = LoggerFactory.getLogger(AbstractController::class.java)
 	// TODO: make this engine a bit more generic
 	protected val engine: ThymeleafTemplateEngine = ThymeleafTemplateEngine()
 

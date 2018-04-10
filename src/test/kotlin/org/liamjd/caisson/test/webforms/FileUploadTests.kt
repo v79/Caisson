@@ -7,7 +7,7 @@ import io.mockk.mockk
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import org.liamjd.caisson.webforms.Form
+import org.liamjd.caisson.webforms.WebForm
 import spark.QueryParamsMap
 import spark.Request
 import java.util.*
@@ -15,7 +15,10 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.Part
 import kotlin.test.assertEquals
 
-class NewTests : Spek({
+/**
+ * Testing file uploads which use the MultipartUploadConverter class
+ */
+class FileUploadTests : Spek({
 
 	val mSparkRequest = mockk<Request>()
 	val mRaw = mockk<HttpServletRequest>()
@@ -40,11 +43,10 @@ class NewTests : Spek({
 		calendar.set(Calendar.MONTH, Calendar.JANUARY)
 		calendar.set(Calendar.DAY_OF_MONTH, 1)
 
-
 		it("Person has a string and an annotated converter") {
 			map.put("name", arrayOf(name))
 			map.put("dob", arrayOf(dob))
-			val person: Person = Form(mSparkRequest, Person::class).get() as Person
+			val person: Person = WebForm(mSparkRequest, Person::class).get() as Person
 
 			assertEquals(name, person.name)
 			assertEquals(calendar.time, person.dob)
@@ -76,7 +78,7 @@ class NewTests : Spek({
 			every { mRaw.getPart(uploadPhoto) } returns photoPart
 			every { mRaw.parts } returns arrayListOf(photoPart)
 
-			val photograph = Form(mSparkRequest, Photograph::class, uploadPhoto).get() as Photograph
+			val photograph = WebForm(mSparkRequest, Photograph::class, uploadPhoto).get() as Photograph
 			assertEquals(uploadPhoto, photoPart.name)
 			assertEquals("img/jpg", photoPart.contentType)
 			assertEquals(123L, photoPart.size)
@@ -100,11 +102,9 @@ class NewTests : Spek({
 			every { doc2Part.submittedFileName } returns "/c/folder/solictor.pdf"
 			every { doc2Part.inputStream } returns bytes.inputStream()
 
-			val legalDocuments = Form(mSparkRequest, LegalDocuments::class, arrayListOf(uploadDoc)).get() as LegalDocuments
+			val legalDocuments = WebForm(mSparkRequest, LegalDocuments::class, arrayListOf(uploadDoc)).get() as LegalDocuments
 
 			assertEquals(2, legalDocuments.docs.size)
-
-
 		}
 
 		it("Uploading two documents, sharing the same input name") {
@@ -123,7 +123,7 @@ class NewTests : Spek({
 			every { doc2Part.submittedFileName } returns "/c/folder/solictor.pdf"
 			every { doc2Part.inputStream } returns bytes.inputStream()
 
-			val legalDocuments2 = Form(mSparkRequest, LegalDocuments::class, uploadManyDocs).get() as LegalDocuments
+			val legalDocuments2 = WebForm(mSparkRequest, LegalDocuments::class, uploadManyDocs).get() as LegalDocuments
 		}
 	}
 })
