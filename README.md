@@ -41,10 +41,10 @@ data class MyFiles(val upload: List<MultipartCaissonContent>)
 And use these classes with Spark-Kotlin's normal request object. You must specify the names of the HTML input components used.
 
 ```HTML
-&lt;form name="fileUpload"&gt
-  &lt;input type="file" name="upload"&gt;
-  &lt;input type="file" name="upload"&gt;
-&lt/form&gt;
+<form name="fileUpload">
+  <input type="file" name="upload">
+  <input type="file" name="upload">
+</form>
 ```
 
 ```kotlin
