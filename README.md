@@ -30,11 +30,11 @@ post("/addPerson") {
 }
 ```
 
-I'm also experimenting with a different approach using Generics and extension functions. This requires you to be explicit when declaring the type of `person`, and it also requires more null checks.
+I'm also experimenting with a different approach using Generics and extension functions. This requires you to be explicit when declaring the type of `person`, and it also requires more null checks as the binding may return null.
 
 ```kotlin
 post("/addPerson") {
-  val person: Person = request.bind(Person::class)
+  val person: Person? = request.bind(Person::class)
   println("person is ${person?.name}, born on ${person?.date}")
   // no longer do I need to parse the request.params map
 }
