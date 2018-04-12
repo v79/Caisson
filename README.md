@@ -30,6 +30,16 @@ post("/addPerson") {
 }
 ```
 
+I'm also experimenting with a different approach using Generics and extension functions. This requires you to be explicit when declaring the type of `person`, and it also requires more null checks.
+
+```kotlin
+post("/addPerson") {
+  val person: Person = request.bind(Person::class)
+  println("person is ${person?.name}, born on ${person?.date}")
+  // no longer do I need to parse the request.params map
+}
+```
+
 ## File uploads
 
 To implement file uploading, your model class must contain a field of type `CaissonMultipartContent` (or a List of these). **Caisson** will store each of the uploaded files' bytestreams in the `CaissonMultipartContent` object:
