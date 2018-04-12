@@ -30,6 +30,16 @@ post("/addPerson") {
 }
 ```
 
+I'm also experimenting with a different approach using Generics and extension functions. This requires you to be explicit when declaring the type of `person`, and it also requires more null checks as the binding may return null.
+
+```kotlin
+post("/addPerson") {
+  val person: Person? = request.bind(Person::class)
+  println("person is ${person?.name}, born on ${person?.date}")
+  // no longer do I need to parse the request.params map
+}
+```
+
 ## File uploads
 
 To implement file uploading, your model class must contain a field of type `CaissonMultipartContent` (or a List of these). **Caisson** will store each of the uploaded files' bytestreams in the `CaissonMultipartContent` object:
@@ -38,13 +48,13 @@ To implement file uploading, your model class must contain a field of type `Cais
 data class MyFiles(val upload: List<MultipartCaissonContent>)
 ```
 
-And use these classes with Spark-Kotlin's normal request object. YOu must specify the names of the HTML input components used.
+And use these classes with Spark-Kotlin's normal request object. You must specify the names of the HTML input components used.
 
 ```HTML
-&lt;form name="fileUpload"&gt
-  &lt;input type="file" name="upload"&gt;
-  &lt;input type="file" name="upload"&gt;
-&lt/form&gt;
+<form name="fileUpload">
+  <input type="file" name="upload">
+  <input type="file" name="upload">
+</form>
 ```
 
 ```kotlin
