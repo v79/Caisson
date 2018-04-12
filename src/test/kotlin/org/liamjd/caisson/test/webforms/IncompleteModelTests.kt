@@ -37,7 +37,7 @@ class IncompleteModelTests: Spek( {
 
 	describe("Model class has constructor fields which are not in the request params") {
 
-		it("Should create a UnusedFieldsTest given only the first String and Int, with a non-null empty value for the other") {
+		it("Should create a UnusedFieldsTest given only the first String and Int") {
 			val used = "I am here"
 			val usedNumber = "999";
 			map.put("used", arrayOf(used))

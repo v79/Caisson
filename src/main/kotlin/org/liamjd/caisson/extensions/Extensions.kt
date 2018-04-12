@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
  * Extension function to bind the model object (as Any?) from the Spark request
  */
 fun Request.bind(modelClass: KClass<*>): Any? {
-//	return modelClass.cast(WebForm(this, modelClass).get())
+
 	return WebForm(this,modelClass).get()
 }
 

@@ -7,7 +7,7 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.superclasses
 
-
+@Deprecated("This is obsolete and doesn't work",ReplaceWith("org.liamjd.caisson.webforms.WebForm"))
 class MultiPartForm(raw: HttpServletRequest, multiPartModel: KClass<*>) {
 
 	init {

@@ -203,7 +203,7 @@ class WebFormTests : Spek({
 			val myGender = "other"
 			val expectedResult = Gender.other
 			request.put("gender",myGender)
-			val form = WebForm(request,UnconvertedGenderForm::class)
+			val form = WebForm.kt(request,UnconvertedGenderForm::class)
 			val result = form.get() as UnconvertedGenderForm
 			assertEquals(expectedResult,result.gender)
 		}*/
