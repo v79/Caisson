@@ -7,6 +7,7 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.liamjd.caisson.annotations.CConverter
 import org.liamjd.caisson.convertors.Converter
+import org.liamjd.caisson.extensions.bind
 import org.liamjd.caisson.webforms.WebForm
 import spark.QueryParamsMap
 import spark.Request
@@ -76,6 +77,15 @@ class WebFormTests : Spek({
 			requestMap.put("myString", myName)
 			val form = WebForm(mSparkRequest, SimpleString::class)
 			val result: SimpleString = form.get() as SimpleString
+			assertEquals(myName.first(), result.myString)
+		}
+	}
+
+	describe("Using the extension function request.bind() to return the correct object") {
+		val myName = arrayOf("Caisson")
+		it("creates a SimpleString with myName as its value") {
+			requestMap.put("myString", myName)
+			val result = mSparkRequest.bind(SimpleString::class) as SimpleString
 			assertEquals(myName.first(), result.myString)
 		}
 	}

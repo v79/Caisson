@@ -7,6 +7,7 @@ import io.mockk.mockk
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import org.liamjd.caisson.extensions.bind
 import org.liamjd.caisson.webforms.WebForm
 import spark.QueryParamsMap
 import spark.Request
@@ -14,6 +15,7 @@ import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.Part
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Testing file uploads which use the MultipartUploadConverter class
@@ -79,10 +81,23 @@ class FileUploadTests : Spek({
 			every { mRaw.parts } returns arrayListOf(photoPart)
 
 			val photograph = WebForm(mSparkRequest, Photograph::class, uploadPhoto).get() as Photograph
-			assertEquals(uploadPhoto, photoPart.name)
-			assertEquals("img/jpg", photoPart.contentType)
-			assertEquals(123L, photoPart.size)
-			assertEquals(10, photoPart.inputStream.readBytes().size)
+			assertEquals(photoPart.submittedFileName, photograph.picture.originalFileName)
+			assertEquals(photoPart.contentType, photograph.picture.contentType)
+			assertEquals(photoPart.size, photograph.picture.size)
+			assertEquals(10, photograph.picture.stream.readBytes().size)
+			photograph.picture.stream.reset()
+		}
+
+		it("Uploading a single named file to a basic clas using the request.bind() extension method") {
+			every { mRaw.getPart(uploadPhoto) } returns photoPart
+			every { mRaw.parts } returns arrayListOf(photoPart)
+
+			val photograph = mSparkRequest.bind(Photograph::class, arrayListOf(uploadPhoto)) as Photograph
+			assertEquals(photoPart.submittedFileName, photograph.picture.originalFileName)
+			assertEquals(photoPart.contentType, photograph.picture.contentType)
+			assertEquals(photoPart.size, photograph.picture.size)
+			assertEquals(10, photograph.picture.stream.readBytes().size)
+			photograph.picture.stream.reset()
 		}
 
 		it("Uploading two documents, each with their own input name") {
@@ -103,6 +118,10 @@ class FileUploadTests : Spek({
 			every { doc2Part.inputStream } returns bytes.inputStream()
 
 			val legalDocuments = WebForm(mSparkRequest, LegalDocuments::class, arrayListOf(uploadDoc)).get() as LegalDocuments
+			legalDocuments.docs.forEach {
+				// not a great test but I can't assume an order to this list
+				assertTrue(it.originalFileName.equals(doc1Part.submittedFileName) || it.originalFileName.equals(doc2Part.submittedFileName))
+			}
 
 			assertEquals(2, legalDocuments.docs.size)
 		}
@@ -126,4 +145,6 @@ class FileUploadTests : Spek({
 			val legalDocuments2 = WebForm(mSparkRequest, LegalDocuments::class, uploadManyDocs).get() as LegalDocuments
 		}
 	}
+
+
 })
