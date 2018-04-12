@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
 /**
  * Extension function to bind the model object (as Any?) from the Spark request
  */
-fun Request.bind(modelClass: KClass<*>): Any? {
+fun <T> Request.bind(modelClass: KClass<*>): T? {
 //	return modelClass.cast(WebForm(this, modelClass).get())
 	return WebForm(this,modelClass).get()
 }
@@ -16,6 +16,6 @@ fun Request.bind(modelClass: KClass<*>): Any? {
  * Extension function to bind the model object (as Any?) from the Spark request, assuming a CaissonMultipartContent
  * parameter for file uploads
  */
-fun Request.bind(modelClass: KClass<*>, partNames: List<String>): Any? {
+fun <T> Request.bind(modelClass: KClass<*>, partNames: List<String>): T? {
 	return WebForm(this,modelClass,partNames).get()
 }

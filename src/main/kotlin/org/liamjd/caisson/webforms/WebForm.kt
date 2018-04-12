@@ -46,7 +46,7 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 	/**
 	 * Generate an object with the given `KClass`, populating all of its primary constructor parameters
 	 */
-	override fun get(): Any? {
+	override fun <T> get(): T? {
 		val primaryConstructor = modelClass.primaryConstructor
 		val constructorParams: MutableMap<KParameter, Any?> = mutableMapOf()
 
@@ -185,7 +185,7 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 		if (!::modelObject.isInitialized || modelObject == null) {
 			return null
 		}
-		return modelObject
+		return modelObject as T
 	}
 
 	/**

@@ -8,7 +8,7 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.liamjd.caisson.Exceptions.CaissonBindException
-import org.liamjd.caisson.webforms.WebForm
+import org.liamjd.caisson.extensions.bind
 import spark.QueryParamsMap
 import spark.Request
 import javax.servlet.http.HttpServletRequest
@@ -42,12 +42,12 @@ class IncompleteModelTests: Spek( {
 			val usedNumber = "999";
 			map.put("used", arrayOf(used))
 			map.put("usedNumber", arrayOf(usedNumber))
-			val unusedFieldsTest: UnusedFieldsTest = WebForm(mSparkRequest, UnusedFieldsTest::class).get() as UnusedFieldsTest
+			val unusedFieldsTest: UnusedFieldsTest? = mSparkRequest.bind<UnusedFieldsTest>(UnusedFieldsTest::class)
 
 			assertNotNull(unusedFieldsTest)
-			assertEquals(used,unusedFieldsTest.used)
-			assertEquals(usedNumber.toInt(), unusedFieldsTest.usedNumber)
-			assertNotNull(unusedFieldsTest.unusedInt)
+			assertEquals(used,unusedFieldsTest?.used)
+			assertEquals(usedNumber.toInt(), unusedFieldsTest?.usedNumber)
+			assertNotNull(unusedFieldsTest?.unusedInt)
 		}
 
 		it("Should fail when not providing a value which should be converted by an annotated converter") {
@@ -56,7 +56,7 @@ class IncompleteModelTests: Spek( {
 			map.put("name", arrayOf(name))
 
 			assertFailsWith<CaissonBindException> {
-				val incompletePerson = WebForm(mSparkRequest, BirthdayPerson::class).get() as BirthdayPerson
+				val incompletePerson = mSparkRequest.bind<BirthdayPerson>(BirthdayPerson::class)
 			}
 		}
 	}
