@@ -34,11 +34,13 @@ I'm also experimenting with a different approach using Generics and extension fu
 
 ```kotlin
 post("/addPerson") {
-  val person: Person? = request.bind(Person::class)
+  val person: Person? = request.bind<Person>(Person::class)
   println("person is ${person?.name}, born on ${person?.date}")
   // no longer do I need to parse the request.params map
 }
 ```
+
+Perhaps with inline functions and reified generics I can reduce this to `val person: Person? = request.bind<Person>()`.
 
 ## File uploads
 
