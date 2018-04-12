@@ -8,13 +8,16 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.liamjd.caisson.Exceptions.CaissonBindException
+import org.liamjd.caisson.extensions.bind
 import org.liamjd.caisson.webforms.WebForm
 import spark.QueryParamsMap
 import spark.Request
+import java.util.*
 import javax.servlet.http.HttpServletRequest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * Testing when the request does not contain all the files identified in the model
@@ -56,8 +59,23 @@ class IncompleteModelTests: Spek( {
 			map.put("name", arrayOf(name))
 
 			assertFailsWith<CaissonBindException> {
-				val incompletePerson = WebForm(mSparkRequest, BirthdayPerson::class).get() as BirthdayPerson
+				val incompletePerson = WebForm(mSparkRequest, BirthdayPerson::class).get() as BirthdayPerson?
 			}
+		}
+
+		it("Should construct default values when request is empty with simple class fields") {
+			val emptyRequest = mSparkRequest.bind(UnusedFieldsTest::class) as UnusedFieldsTest
+			assertNotNull(emptyRequest)
+			assertTrue { emptyRequest.used.isBlank() }
+			assertEquals(0,emptyRequest.usedNumber)
+			assertEquals(0,emptyRequest.unusedInt)
+		}
+
+		it("Should not throw exception if the converter can handle empty values") {
+			val emptyPersonRequest = mSparkRequest.bind(PersonWithDefaultBirthday::class) as PersonWithDefaultBirthday
+			assertNotNull(emptyPersonRequest)
+			assertNotNull(emptyPersonRequest.dob)
+			assert(emptyPersonRequest.dob.before(Date()))
 		}
 	}
 
