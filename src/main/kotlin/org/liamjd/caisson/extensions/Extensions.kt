@@ -6,6 +6,7 @@ import spark.Request
 /**
  * Extension function to bind the model object (as T?) from the Spark request
  */
+
 inline fun <reified T> Request.bind(): T? {
 	return WebForm(this,T::class).get()
 }

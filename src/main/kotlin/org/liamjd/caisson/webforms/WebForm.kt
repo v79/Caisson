@@ -19,7 +19,7 @@ import kotlin.reflect.jvm.jvmErasure
 
 typealias RequestParams = Map<String, Array<String>>
 
-class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
+class WebForm(sparkRequest: Request, modelClass: KClass<*>): Form {
 
 	val logger = LoggerFactory.getLogger(WebForm::class.java)
 
@@ -183,6 +183,7 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 		}
 
 		if (!::modelObject.isInitialized || modelObject == null) {
+			logger.error("Could not bind model class ${modelClass.simpleName} with request")
 			return null
 		}
 		return modelObject as T
