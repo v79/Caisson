@@ -12,10 +12,8 @@ import org.liamjd.caisson.webforms.WebForm
 import spark.QueryParamsMap
 import spark.Request
 import java.util.*
-import javax.servlet.http.HttpServletRequest
 import kotlin.test.assertEquals
 
-data class TestPerson(val name: String, val age: Int)
 data class SimpleString(val myString: String)
 data class SimpleInt(val myNumber: Int)
 data class SimpleBool(val myBoolean: Boolean)
@@ -44,9 +42,7 @@ class GenderConverter : Converter {
 data class MySimpleDate(@CConverter(converterClass = SimpleDateConverter::class) val myDate: Date)
 data class UnexpectedInteger(@CConverter(converterClass = BadIntConverter::class) val myInt: Int)
 data class GenderForm(@CConverter(converterClass = GenderConverter::class) val gender: Gender)
-data class UnconvertedGenderForm(val gender: Gender)
 data class ColourListForm(val colour: List<String>)
-data class LotteryListForm(val numbers: List<Int>)
 data class APerson(val name: String, val age: Int)
 data class BirthdayPerson(val name: String, @CConverter(SimpleDateConverter::class) val dob: Date)
 
@@ -56,10 +52,7 @@ data class BirthdayPerson(val name: String, @CConverter(SimpleDateConverter::cla
 class WebFormTests : Spek({
 
 	val mSparkRequest = mockk<Request>()
-	val mRaw = mockk<HttpServletRequest>()
-	val paramsMap: Map<String, List<String>>
 	val mSparkQueryMap = mockk<QueryParamsMap>()
-	val map = mutableMapOf<String, Array<String>>()
 	val requestMap = mutableMapOf<String, Array<String>>()
 
 	every { mSparkRequest.queryMap() } returns mSparkQueryMap

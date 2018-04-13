@@ -24,7 +24,6 @@ class FileUploadTests : Spek({
 
 	val mSparkRequest = mockk<Request>()
 	val mRaw = mockk<HttpServletRequest>()
-	val paramsMap: Map<String, List<String>>
 	val mSparkQueryMap = mockk<QueryParamsMap>()
 	val map = mutableMapOf<String, Array<String>>()
 

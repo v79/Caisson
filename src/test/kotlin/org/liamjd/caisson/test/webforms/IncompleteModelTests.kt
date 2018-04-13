@@ -25,7 +25,6 @@ class IncompleteModelTests: Spek( {
 
 	val mSparkRequest = mockk<Request>()
 	val mRaw = mockk<HttpServletRequest>()
-	val paramsMap: Map<String, List<String>>
 	val mSparkQueryMap = mockk<QueryParamsMap>()
 	val map = mutableMapOf<String, Array<String>>()
 
@@ -46,10 +45,11 @@ class IncompleteModelTests: Spek( {
 			map.put("usedNumber", arrayOf(usedNumber))
 			val unusedFieldsTest: UnusedFieldsTest? = mSparkRequest.bind<UnusedFieldsTest>()
 
-			assertNotNull(unusedFieldsTest)
-			assertEquals(used,unusedFieldsTest?.used)
-			assertEquals(usedNumber.toInt(), unusedFieldsTest?.usedNumber)
-			assertNotNull(unusedFieldsTest?.unusedInt)
+			assertNotNull(unusedFieldsTest) {
+				assertEquals(used,it.used)
+				assertEquals(usedNumber.toInt(), it.usedNumber)
+				assertNotNull(it.unusedInt)
+			}
 		}
 
 		it("Should fail when not providing a value which should be converted by an annotated converter") {

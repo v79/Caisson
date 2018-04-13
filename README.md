@@ -20,27 +20,14 @@ class SimpleDateConverter : Converter {
 }
 ```
 
-And use these classes with Spark-Kotlin's normal request object:
-
+To bind the `Person` model from the spark-kotlin request, simply call the `bind<>()(` function on the `request`, supplying the model class in the generics diamonds.
 ```kotlin
 post("/addPerson") {
-  val person = Form(request, Person::class).get() as Person
-  println("person is ${person.name}, born on ${person.date}")
-  // no longer do I need to parse the request.params map
-}
-```
-
-I'm also experimenting with a different approach using Generics and extension functions. This requires you to be explicit when declaring the type of `person`, and it also requires more null checks as the binding may return null.
-
-```kotlin
-post("/addPerson") {
-  val person: Person? = request.bind<Person>(Person::class)
+  val person = request.bind<Person>()
   println("person is ${person?.name}, born on ${person?.date}")
-  // no longer do I need to parse the request.params map
 }
 ```
 
-Perhaps with inline functions and reified generics I can reduce this to `val person: Person? = request.bind<Person>()`.
 
 ## File uploads
 
@@ -60,7 +47,7 @@ And use these classes with Spark-Kotlin's normal request object. You must specif
 ```
 
 ```kotlin
-val myFiles = Form(request, MyFiles::class, "upload").get() as MyFiles
+val myFiles = request.bind<MyFiles>(arrayListOf("upload"))
 ```
 
 Alternatively, if each input component has a different name, supply a List of their names as the third parameter.
