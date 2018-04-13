@@ -47,7 +47,7 @@ class FileUploadTests : Spek({
 		it("Person has a string and an annotated converter") {
 			map.put("name", arrayOf(name))
 			map.put("dob", arrayOf(dob))
-			val person: Person? = mSparkRequest.bind<Person>(Person::class)
+			val person = mSparkRequest.bind<Person>()
 
 			assertEquals(name, person?.name)
 			assertEquals(calendar.time, person?.dob)
@@ -74,12 +74,11 @@ class FileUploadTests : Spek({
 		every { photoPart.submittedFileName } returns "/c/folder/photo.jpg"
 		every { photoPart.inputStream } returns bytes.inputStream()
 
-
 		it("Uploading a single named file to a basic class") {
 			every { mRaw.getPart(uploadPhoto) } returns photoPart
 			every { mRaw.parts } returns arrayListOf(photoPart)
 
-			val photograph = mSparkRequest.bind<Photograph>(Photograph::class, arrayListOf(uploadPhoto))
+			val photograph = mSparkRequest.bind<Photograph>(arrayListOf(uploadPhoto))
 			assertEquals(photoPart.submittedFileName, photograph?.picture?.originalFileName)
 			assertEquals(photoPart.contentType, photograph?.picture?.contentType)
 			assertEquals(photoPart.size, photograph?.picture?.size)
@@ -91,7 +90,7 @@ class FileUploadTests : Spek({
 			every { mRaw.getPart(uploadPhoto) } returns photoPart
 			every { mRaw.parts } returns arrayListOf(photoPart)
 
-			val photograph = mSparkRequest.bind<Photograph>(Photograph::class, arrayListOf(uploadPhoto))
+			val photograph = mSparkRequest.bind<Photograph>(arrayListOf(uploadPhoto))
 			assertEquals(photoPart.submittedFileName, photograph?.picture?.originalFileName)
 			assertEquals(photoPart.contentType, photograph?.picture?.contentType)
 			assertEquals(photoPart.size, photograph?.picture?.size)
@@ -116,7 +115,7 @@ class FileUploadTests : Spek({
 			every { doc2Part.submittedFileName } returns "/c/folder/solictor.pdf"
 			every { doc2Part.inputStream } returns bytes.inputStream()
 
-			val legalDocuments = mSparkRequest.bind<LegalDocuments>(LegalDocuments::class, arrayListOf(uploadDoc))
+			val legalDocuments = mSparkRequest.bind<LegalDocuments>(arrayListOf(uploadDoc))
 			legalDocuments?.docs?.forEach {
 				// not a great test but I can't assume an order to this list
 				assertTrue(it.originalFileName.equals(doc1Part.submittedFileName) || it.originalFileName.equals(doc2Part.submittedFileName))
@@ -141,7 +140,7 @@ class FileUploadTests : Spek({
 			every { doc2Part.submittedFileName } returns "/c/folder/solictor.pdf"
 			every { doc2Part.inputStream } returns bytes.inputStream()
 
-			val legalDocuments2 = mSparkRequest.bind<LegalDocuments>(LegalDocuments::class, arrayListOf(uploadManyDocs))
+			val legalDocuments2 = mSparkRequest.bind<LegalDocuments>(arrayListOf(uploadManyDocs))
 //			assertEquals(2, legalDocuments2?.docs?.size)
 		}
 	}

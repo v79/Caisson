@@ -42,7 +42,7 @@ class IncompleteModelTests: Spek( {
 			val usedNumber = "999";
 			map.put("used", arrayOf(used))
 			map.put("usedNumber", arrayOf(usedNumber))
-			val unusedFieldsTest: UnusedFieldsTest? = mSparkRequest.bind<UnusedFieldsTest>(UnusedFieldsTest::class)
+			val unusedFieldsTest: UnusedFieldsTest? = mSparkRequest.bind<UnusedFieldsTest>()
 
 			assertNotNull(unusedFieldsTest)
 			assertEquals(used,unusedFieldsTest?.used)
@@ -56,7 +56,7 @@ class IncompleteModelTests: Spek( {
 			map.put("name", arrayOf(name))
 
 			assertFailsWith<CaissonBindException> {
-				val incompletePerson = mSparkRequest.bind<BirthdayPerson>(BirthdayPerson::class)
+				val incompletePerson = mSparkRequest.bind<BirthdayPerson>()
 			}
 		}
 	}

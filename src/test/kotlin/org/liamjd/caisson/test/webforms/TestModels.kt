@@ -22,7 +22,25 @@ class SimpleDateConverter : Converter {
 	}
 }
 
+/**
+ * This will return a date even if no value is passed
+ */
+class AssumingDateConverter : Converter {
+	override fun convert(from: String): Date? {
+		if(from.isNullOrEmpty()) {
+			return Date()
+		}
+		val sdf: SimpleDateFormat = SimpleDateFormat("dd/MM/yyyy")
+		try {
+			return sdf.parse(from)
+		} catch (e: ParseException) {
+			return null
+		}
+	}
+}
+
 data class Person(val name: String, @CConverter(converterClass = SimpleDateConverter::class) val dob: Date)
+data class PersonWithDefaultBirthday(val name: String, @CConverter(converterClass = AssumingDateConverter::class) val dob: Date)
 
 data class Photograph(val picture: CaissonMultipartContent)
 
