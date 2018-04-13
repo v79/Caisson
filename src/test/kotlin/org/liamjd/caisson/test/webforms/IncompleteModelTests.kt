@@ -9,7 +9,6 @@ import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.liamjd.caisson.Exceptions.CaissonBindException
 import org.liamjd.caisson.extensions.bind
-import org.liamjd.caisson.webforms.WebForm
 import spark.QueryParamsMap
 import spark.Request
 import java.util.*
@@ -64,18 +63,18 @@ class IncompleteModelTests: Spek( {
 		}
 
 		it("Should construct default values when request is empty with simple class fields") {
-			val emptyRequest = mSparkRequest.bind(UnusedFieldsTest::class) as UnusedFieldsTest
+			val emptyRequest = mSparkRequest.bind<UnusedFieldsTest>()
 			assertNotNull(emptyRequest)
-			assertTrue { emptyRequest.used.isBlank() }
-			assertEquals(0,emptyRequest.usedNumber)
-			assertEquals(0,emptyRequest.unusedInt)
+			assertTrue { emptyRequest?.used!!.isBlank() }
+			assertEquals(0,emptyRequest?.usedNumber)
+			assertEquals(0,emptyRequest?.unusedInt)
 		}
 
 		it("Should not throw exception if the converter can handle empty values") {
-			val emptyPersonRequest = mSparkRequest.bind(PersonWithDefaultBirthday::class) as PersonWithDefaultBirthday
+			val emptyPersonRequest = mSparkRequest.bind<PersonWithDefaultBirthday>()
 			assertNotNull(emptyPersonRequest)
-			assertNotNull(emptyPersonRequest.dob)
-			assert(emptyPersonRequest.dob.before(Date()))
+			assertNotNull(emptyPersonRequest?.dob)
+			assert(emptyPersonRequest?.dob!!.before(Date()))
 		}
 	}
 
