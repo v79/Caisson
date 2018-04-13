@@ -45,12 +45,12 @@ class IncompleteModelTests: Spek( {
 			val usedNumber = "999";
 			map.put("used", arrayOf(used))
 			map.put("usedNumber", arrayOf(usedNumber))
-			val unusedFieldsTest: UnusedFieldsTest = WebForm(mSparkRequest, UnusedFieldsTest::class).get() as UnusedFieldsTest
+			val unusedFieldsTest: UnusedFieldsTest? = mSparkRequest.bind<UnusedFieldsTest>()
 
 			assertNotNull(unusedFieldsTest)
-			assertEquals(used,unusedFieldsTest.used)
-			assertEquals(usedNumber.toInt(), unusedFieldsTest.usedNumber)
-			assertNotNull(unusedFieldsTest.unusedInt)
+			assertEquals(used,unusedFieldsTest?.used)
+			assertEquals(usedNumber.toInt(), unusedFieldsTest?.usedNumber)
+			assertNotNull(unusedFieldsTest?.unusedInt)
 		}
 
 		it("Should fail when not providing a value which should be converted by an annotated converter") {
@@ -59,7 +59,7 @@ class IncompleteModelTests: Spek( {
 			map.put("name", arrayOf(name))
 
 			assertFailsWith<CaissonBindException> {
-				val incompletePerson = WebForm(mSparkRequest, BirthdayPerson::class).get() as BirthdayPerson?
+				val incompletePerson = mSparkRequest.bind<BirthdayPerson>()
 			}
 		}
 

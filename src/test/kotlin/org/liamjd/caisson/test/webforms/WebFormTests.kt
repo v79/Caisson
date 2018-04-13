@@ -76,8 +76,8 @@ class WebFormTests : Spek({
 		it("creates a SimpleString with myName as its value") {
 			requestMap.put("myString", myName)
 			val form = WebForm(mSparkRequest, SimpleString::class)
-			val result: SimpleString = form.get() as SimpleString
-			assertEquals(myName.first(), result.myString)
+			val result: SimpleString? = form.get<SimpleString>()
+			assertEquals(myName.first(), result?.myString)
 		}
 	}
 
@@ -85,8 +85,8 @@ class WebFormTests : Spek({
 		val myName = arrayOf("Caisson")
 		it("creates a SimpleString with myName as its value") {
 			requestMap.put("myString", myName)
-			val result = mSparkRequest.bind(SimpleString::class) as SimpleString
-			assertEquals(myName.first(), result.myString)
+			val result = mSparkRequest.bind<SimpleString>()
+			assertEquals(myName.first(), result?.myString)
 		}
 	}
 
@@ -96,44 +96,39 @@ class WebFormTests : Spek({
 			val myNumber = arrayOf("669")
 			val myExpectedResult = myNumber.first().toInt()
 			requestMap.put("myNumber", myNumber)
-			val form = WebForm(mSparkRequest, SimpleInt::class)
-			val result: SimpleInt = form.get() as SimpleInt
-			assertEquals(myExpectedResult, result.myNumber)
+			val result = mSparkRequest.bind<SimpleInt>()
+			assertEquals(myExpectedResult, result?.myNumber)
 		}
 
 		it("conversion when working with Longs") {
 			val myLongNumber = arrayOf("1551441414479")
 			val myExpectedResult: Long = 1551441414479L
 			requestMap.put("myLong", myLongNumber)
-			val form = WebForm(mSparkRequest, SimpleLong::class)
-			val result: SimpleLong = form.get() as SimpleLong
-			assertEquals(myExpectedResult, result.myLong)
+			val result = mSparkRequest.bind<SimpleLong>()
+			assertEquals(myExpectedResult, result?.myLong)
 		}
 
 		it("conversion when working with Booleans") {
 			val myBoolean = arrayOf("true")
 			val myExpectedResult = true
 			requestMap.put("myBoolean", myBoolean)
-			val form = WebForm(mSparkRequest, SimpleBool::class)
-			val result: SimpleBool = form.get() as SimpleBool
-			assertEquals(myExpectedResult, result.myBoolean)
+			val result = mSparkRequest.bind<SimpleBool>()
+			assertEquals(myExpectedResult, result?.myBoolean)
 		}
 
 		it("conversion when working with Doubles") {
 			val myDouble = arrayOf("5.5")
 			val myExpectedResult = 5.5
 			requestMap.put("myDouble", myDouble)
-			val form = WebForm(mSparkRequest, SimpleDouble::class)
-			val result: SimpleDouble = form.get() as SimpleDouble
-			assertEquals(myExpectedResult, result.myDouble)
+			val result = mSparkRequest.bind<SimpleDouble>()
+			assertEquals(myExpectedResult, result?.myDouble)
 		}
 		it("conversion when working with Floats") {
 			val myFloat = arrayOf("23.64")
 			val myExpectedResult: Float = 23.64F
 			requestMap.put("myFloat", myFloat)
-			val form = WebForm(mSparkRequest, SimpleFloat::class)
-			val result: SimpleFloat = form.get() as SimpleFloat
-			assertEquals(myExpectedResult, result.myFloat)
+			val result = mSparkRequest.bind<SimpleFloat>()
+			assertEquals(myExpectedResult, result?.myFloat)
 		}
 	}
 
@@ -147,17 +142,15 @@ class WebFormTests : Spek({
 			cal.set(Calendar.DAY_OF_MONTH,6)
 			val myExpectedDate: Date = cal.time
 			requestMap.put("myDate",myDate)
-			val form = WebForm(mSparkRequest,MySimpleDate::class)
-			val result: MySimpleDate = form.get() as MySimpleDate
-			assertEquals(myExpectedDate,result.myDate)
+			val result = mSparkRequest.bind<MySimpleDate>()
+			assertEquals(myExpectedDate,result?.myDate)
 		}
 		it("should use the annotated converter in preference to the default converter") {
 			val myNumber = arrayOf("1")
 			val myExpectedResult = 666
 			requestMap.put("myInt", myNumber)
-			val form = WebForm(mSparkRequest, UnexpectedInteger::class)
-			val result: UnexpectedInteger = form.get() as UnexpectedInteger
-			assertEquals(myExpectedResult, result.myInt)
+			val result = mSparkRequest.bind<UnexpectedInteger>()
+			assertEquals(myExpectedResult, result?.myInt)
 		}
 	}
 
@@ -167,10 +160,9 @@ class WebFormTests : Spek({
 			val age = "18"
 			requestMap.put("name", arrayOf(name))
 			requestMap.put("age", arrayOf(age))
-			val form = WebForm(mSparkRequest,APerson::class)
-			val result = form.get() as APerson
-			assertEquals(name,result.name)
-			assertEquals(age.toInt(),result.age)
+			val result= mSparkRequest.bind<APerson>()
+			assertEquals(name,result?.name)
+			assertEquals(age.toInt(),result?.age)
 		}
 		it("should convert a basic value and an annotated converter value") {
 			val name = "Liam"
@@ -183,10 +175,9 @@ class WebFormTests : Spek({
 			val myExpectedDate: Date = cal.time
 			requestMap.put("name", arrayOf(name))
 			requestMap.put("dob", arrayOf(dob))
-			val form = WebForm(mSparkRequest,BirthdayPerson::class)
-			val result = form.get() as BirthdayPerson
-			assertEquals(name,result.name)
-			assertEquals(myExpectedDate,result.dob)
+			val result = mSparkRequest.bind<BirthdayPerson>()
+			assertEquals(name,result?.name)
+			assertEquals(myExpectedDate,result?.dob)
 		}
 	}
 
@@ -195,9 +186,8 @@ class WebFormTests : Spek({
 			val myGender = arrayOf("other")
 			val expectedResult = Gender.other
 			requestMap.put("gender",myGender)
-			val form = WebForm(mSparkRequest,GenderForm::class)
-			val result = form.get() as GenderForm
-			assertEquals(expectedResult,result.gender)
+			val result = mSparkRequest.bind<GenderForm>()
+			assertEquals(expectedResult,result?.gender)
 		}
 		/*it("might be able to work with a reflection-based approach?") {
 			val myGender = "other"
@@ -213,10 +203,9 @@ class WebFormTests : Spek({
 		it("should populate a list of strings") {
 			val myColours = arrayOf("red","green")
 			requestMap.put("colour",myColours)
-			val form = WebForm(mSparkRequest,ColourListForm::class)
-			val result = form.get() as ColourListForm
+			val result = mSparkRequest.bind<ColourListForm>()
 			// not going to make an assumption based on order
-			assertEquals(myColours.size,result.colour.size)
+			assertEquals(myColours.size,result?.colour?.size)
 		}
 
 	}
