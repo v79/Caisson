@@ -51,7 +51,6 @@ class FileUploadTests : Spek({
 
 			assertEquals(name, person?.name)
 			assertEquals(calendar.time, person?.dob)
-			println(person)
 		}
 	}
 

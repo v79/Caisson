@@ -7,7 +7,7 @@ import io.mockk.mockk
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import org.liamjd.caisson.Exceptions.CaissonBindException
+import org.liamjd.caisson.exceptions.CaissonBindException
 import org.liamjd.caisson.extensions.bind
 import spark.QueryParamsMap
 import spark.Request
@@ -72,9 +72,33 @@ class IncompleteModelTests: Spek( {
 
 		it("Should not throw exception if the converter can handle empty values") {
 			val emptyPersonRequest = mSparkRequest.bind<PersonWithDefaultBirthday>()
-			assertNotNull(emptyPersonRequest)
-			assertNotNull(emptyPersonRequest?.dob)
-			assert(emptyPersonRequest?.dob!!.before(Date()))
+			assertNotNull(emptyPersonRequest) {
+				assertNotNull(it.dob)
+				assert(it.dob.before(Date()))
+			}
+		}
+
+		it("Should use default values to construct the object when not provided by params") {
+			val colour = "Blue"
+			map.put("colour",arrayOf(colour))
+			val carnation = mSparkRequest.bind<DefaultValueTest>()
+			assertNotNull(carnation) {
+				assertEquals(colour,it.colour)
+				assertEquals("Carnation", it.flower)
+			}
+		}
+
+		it("Should not use default value when one is provided in params") {
+			val colour = "Red"
+			val flower = "Tulip"
+			map.put("colour",arrayOf(colour))
+			map.put("flower",arrayOf(flower))
+			val tulip = mSparkRequest.bind<DefaultValueTest>()
+			assertNotNull(tulip) {
+				assertEquals(colour,it.colour)
+				assertEquals(flower,it.flower)
+			}
+
 		}
 	}
 

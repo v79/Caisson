@@ -20,7 +20,7 @@ class SimpleDateConverter : Converter {
 }
 ```
 
-To bind the `Person` model from the spark-kotlin request, simply call the `bind<>()(` function on the `request`, supplying the model class in the generics diamonds.
+To bind the `Person` model from the spark-kotlin request, simply call the `bind<>()` function on the `request`, supplying the model class in the generics diamonds.
 ```kotlin
 post("/addPerson") {
   val person = request.bind<Person>()
