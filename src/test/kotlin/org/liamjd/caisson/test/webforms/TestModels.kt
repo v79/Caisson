@@ -47,3 +47,5 @@ data class Photograph(val picture: CaissonMultipartContent)
 data class LegalDocuments(val docs: List<CaissonMultipartContent>)
 
 data class UnusedFieldsTest(val used: String, val usedNumber: Int, val unusedInt: Int)
+
+data class DefaultValueTest(val colour: String, val flower: String = "Carnation")
