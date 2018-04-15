@@ -17,6 +17,7 @@ package org.liamjd.spark.templates.thymeleaf;
  */
 
 
+import org.liamjd.caisson.views.templates.CaissonEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.extras.java8time.dialect.Java8TimeDialect;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -36,7 +37,7 @@ import java.util.Set;
  * @author David Vaillant https://github.com/dvaillant
  * @author Maarten Mulders https://github.com/mthmulders
  */
-public class ThymeleafTemplateEngine extends TemplateEngine {
+public class ThymeleafTemplateEngine extends TemplateEngine implements CaissonEngine {
 
     private static final String DEFAULT_PREFIX = "templates/";
     private static final String DEFAULT_SUFFIX = ".html";
