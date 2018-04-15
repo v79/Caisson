@@ -1,43 +1,15 @@
 package org.liamjd.caisson.test.webforms
 
 import org.liamjd.caisson.annotations.CConverter
-import org.liamjd.caisson.convertors.Converter
 import org.liamjd.caisson.models.CaissonMultipartContent
-import java.text.ParseException
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDate
+import java.time.Period
 import java.util.*
 
 /**
  * A bunch of model classes used in testing
  */
-
-class SimpleDateConverter : Converter {
-	override fun convert(from: String): Date? {
-		val sdf: SimpleDateFormat = SimpleDateFormat("dd/MM/yyyy")
-		try {
-			return sdf.parse(from)
-		} catch (e: ParseException) {
-			return null
-		}
-	}
-}
-
-/**
- * This will return a date even if no value is passed
- */
-class AssumingDateConverter : Converter {
-	override fun convert(from: String): Date? {
-		if(from.isNullOrEmpty()) {
-			return Date()
-		}
-		val sdf: SimpleDateFormat = SimpleDateFormat("dd/MM/yyyy")
-		try {
-			return sdf.parse(from)
-		} catch (e: ParseException) {
-			return null
-		}
-	}
-}
 
 data class Person(val name: String, @CConverter(converterClass = SimpleDateConverter::class) val dob: Date)
 data class PersonWithDefaultBirthday(val name: String, @CConverter(converterClass = AssumingDateConverter::class) val dob: Date)
@@ -49,3 +21,20 @@ data class LegalDocuments(val docs: List<CaissonMultipartContent>)
 data class UnusedFieldsTest(val used: String, val usedNumber: Int, val unusedInt: Int)
 
 data class DefaultValueTest(val colour: String, val flower: String = "Carnation")
+
+class PersonWithInitBlock(val name: String, @CConverter(LocalDateConverter::class) val dob: LocalDate) {
+
+	private val hash: Long
+	val age: Int
+		get() {
+			val now = LocalDate.now()
+			val between = Period.between(dob, now)
+			return between.years
+		}
+	init {
+		hash = name.length + age + Instant.now().toEpochMilli();
+	}
+
+	override fun toString(): String =
+		"${name} is ${age} years old and has private hash ${hash}"
+}
