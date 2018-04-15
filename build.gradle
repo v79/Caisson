@@ -1,5 +1,5 @@
 group 'org.liamjd'
-version '0.3.3-SNAPSHOT'
+version '0.4.3-SNAPSHOT'
 
 buildscript {
     // declare some versions
@@ -41,6 +41,9 @@ dependencies {
     // Thymeleaf templating engine
     compile group: 'org.thymeleaf', name:"thymeleaf", version: "$thymeleaf_version"
     compile group: 'org.thymeleaf.extras', name: 'thymeleaf-extras-java8time', version: '3.0.0.RELEASE'
+
+    // reflections for annotation scanning
+    compile group: 'org.reflections', name: 'reflections', version: "0.9.11"
 
     // testing
     testCompile group: "org.jetbrains.kotlin", name: "kotlin-test", version: "$kotlin_version"
