@@ -1,5 +1,6 @@
 package org.liamjd.caisson.controllers
 
+import org.liamjd.caisson.views.templates.CaissonEngine
 import org.liamjd.caisson.webforms.RequestParams
 import spark.Request
 import spark.Response
@@ -9,6 +10,7 @@ import java.net.URLDecoder
 interface CaissonController {
 
 	val FLASH_COUNT_MAX: Int
+	var engine: CaissonEngine
 
 	fun flash(request: Request, response: Response, key: String, value: Any)
 	fun emptyFlash(request: Request)

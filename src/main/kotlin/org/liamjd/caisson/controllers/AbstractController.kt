@@ -1,7 +1,6 @@
 package org.liamjd.caisson.controllers
 
 import org.liamjd.caisson.views.templates.CaissonEngine
-import org.liamjd.caisson.webforms.RequestParams
 import org.liamjd.spark.templates.thymeleaf.ThymeleafTemplateEngine
 import org.slf4j.LoggerFactory
 import spark.Request
@@ -23,16 +22,13 @@ abstract class AbstractController(path: String) : CaissonController {
 	}
 
 	override val FLASH_COUNT_MAX = 3
+	override lateinit var engine: CaissonEngine
+
+	var path: String
+	var model: MutableMap<String, Any> = hashMapOf<String, Any>()
+	var session: Session? = null
 
 	internal open val logger = LoggerFactory.getLogger(AbstractController::class.java)
-	// TODO: make this engine a bit more generic
-	protected lateinit var engine: CaissonEngine
-//	protected val engine: ThymeleafTemplateEngine = ThymeleafTemplateEngine()
-
-	var session: Session? = null
-	open lateinit var path: String
-	val controllerHome: String = path + "/"
-	val model: MutableMap<String, Any> = hashMapOf<String, Any>()
 
 	init {
 
