@@ -71,8 +71,11 @@ class IncompleteModelTests: Spek( {
 		}
 
 		it("Should not throw exception if the converter can handle empty values") {
+			val name = "Bob"
+			map.put("name",arrayOf(name))
 			val emptyPersonRequest = mSparkRequest.bind<PersonWithDefaultBirthday>()
 			assertNotNull(emptyPersonRequest) {
+				assertEquals(name, it.name)
 				assertNotNull(it.dob)
 				assert(it.dob.before(Date()))
 			}
