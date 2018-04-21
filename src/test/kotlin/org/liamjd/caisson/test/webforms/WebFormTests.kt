@@ -60,6 +60,7 @@ class WebFormTests : Spek({
 	every { mSparkRequest.raw()} returns null
 
 	beforeEachTest {
+		println("88888888888888888888888888 Spek Test 8888888888888888888888888888")
 		requestMap.clear()
 	}
 

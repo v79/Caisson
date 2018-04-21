@@ -1,5 +1,5 @@
 group 'org.liamjd'
-version '0.3.3-SNAPSHOT'
+version '0.3.4-SNAPSHOT'
 
 buildscript {
     // declare some versions
@@ -8,6 +8,7 @@ buildscript {
     ext.spek_version = '1.1.5'
     ext.thymeleaf_version = '3.0.6.RELEASE'
     ext.spark_kotlin_version = '1.0.0-alpha'
+    ext.moshi_version = '1.5.0'
 
     repositories {
         mavenCentral()
@@ -41,6 +42,10 @@ dependencies {
     // Thymeleaf templating engine
     compile group: 'org.thymeleaf', name:"thymeleaf", version: "$thymeleaf_version"
     compile group: 'org.thymeleaf.extras', name: 'thymeleaf-extras-java8time', version: '3.0.0.RELEASE'
+
+    // json via moshi
+    compile group: 'com.squareup.moshi', name: 'moshi', version: "$moshi_version"
+    compile group: 'com.squareup.moshi', name: 'moshi-kotlin', version: "$moshi_version"
 
     // testing
     testCompile group: "org.jetbrains.kotlin", name: "kotlin-test", version: "$kotlin_version"
