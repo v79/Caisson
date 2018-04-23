@@ -1,5 +1,5 @@
 # Caisson
-An MVC Framework for the Spark-Kotlin project
+An MVC library for the Spark-Kotlin project
 
 **Caisson** is an attempt introduce some basic MVC functionality to the Spark-Kotlin project. It is inspired by SpringMVC, but with a much smaller and simpler scope. Step one is to introduce *model binding* and *converters* to Spark-Kotlin, using annotations and reflection to construct instances of Kotlin classes from a Spark-Kotlin request parameter map.
 
@@ -63,4 +63,4 @@ Alternatively, if each input component has a different name, supply a List of th
 val myFiles = request.bind<MyFiles>(arrayListOf("drivingLicense,passport"))
 ```
 
-This project is in the very earliest stages, and I have a lot to learn about Kotlin, HTTP requests, Reflection and more besides. So don't even think of using it :)
+This project is in the very earliest stages, and I have a lot to learn about Kotlin, HTTP requests, Reflection and more besides. So don't even think of using it :). There is a corresponding demo project hosted on github called [https://github.com/v79/spark-caisson-integration](spark-caisson-integration) which implements all the features of Caisson and may prove useful while I'm still working on the documentation.
