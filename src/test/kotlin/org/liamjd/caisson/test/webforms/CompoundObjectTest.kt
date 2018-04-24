@@ -21,6 +21,9 @@ object Business {
 	val email = "liam@software.inc"
 }
 
+/**
+ * Tests complicated large forms
+ */
 class CompoundObjectTest : Spek({
 	val mSparkRequest = mockk<Request>()
 	val mRaw = mockk<HttpServletRequest>()

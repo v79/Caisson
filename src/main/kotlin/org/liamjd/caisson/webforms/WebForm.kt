@@ -18,20 +18,37 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.jvmErasure
 
+
+/**
+ * Shorthand form for Map<String<Array<String>>
+ */
 typealias RequestParams = Map<String, Array<String>>
 
+/**
+ * A prefix may appear in the HTML field names but not in the corresponding model object.
+ * If no `prefix` part is supplied, the prefix is considered null and ignored. Defaults to 'null`
+ */
 class Prefix(val prefix: String?, val separator: String? = ".") {
 	constructor() : this("")
 
+	/**
+	 * Not a true null, but an empty prefix is meaningless
+	 */
 	fun isNull(): Boolean = prefix.isNullOrEmpty()
-	override fun toString(): String = if(isNull()) { "" } else { prefix + separator }
+
+	override fun toString(): String = if (isNull()) {
+		""
+	} else {
+		prefix + separator
+	}
 }
 
+/**
+ * Do not call this class directly, unless from Java. Constructs a WebForm object form the given `request` for the
+ * `modelClass` KClass.
+ * Call `.get()` to return the final model object.
+ */
 class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
-
-	companion object {
-		var counter: Int = 0
-	}
 
 	val logger = LoggerFactory.getLogger(WebForm::class.java)
 
@@ -43,23 +60,29 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 	private val request: Request
 	private var modelPrefix: Prefix = Prefix()
 
+	/**
+	 * Constructs a WebForm object form the given `request` for the`modelClass` KClass.
+	 * Use this constructor when uploading files by supplying a list of names for the HTTP request parts
+	 */
 	constructor(sparkRequest: Request, modelClass: KClass<*>, partNames: List<String>) : this(sparkRequest, modelClass) {
 		this.multiPartUploadNames = partNames
-//		this.modelPrefix = Prefix()
 	}
 
+	/**
+	 * Constructs a WebForm object form the given `request` for the`modelClass` KClass.
+	 * Use this constructor when uploading files by supplying the HTTP part name
+	 */
 	constructor(sparkRequest: Request, modelClass: KClass<*>, partName: String) : this(sparkRequest, modelClass) {
 		this.multiPartUploadNames = listOf(partName)
-//		this.modelPrefix = Prefix()
 	}
 
-	constructor(sparkRequest: Request, modelClass: KClass<*>, prefix: Prefix = Prefix()): this(sparkRequest, modelClass) {
+	/**
+	 * If the HTML field name is to be used in a @Compound object, a file name prefix and separator can be supplied
+	 * as a `Prefix` object. Defaults to no prefix and a "." separator.
+	 */
+	constructor(sparkRequest: Request, modelClass: KClass<*>, prefix: Prefix = Prefix()) : this(sparkRequest, modelClass) {
 		this.modelPrefix = prefix
-		counter++
-		println("--${counter} ---------- a prefix has been provided and set to '${modelPrefix}' for ${modelClass.simpleName}")
 	}
-
-	//, modelPrefix: Prefix = Prefix()
 
 	init {
 		this.modelClass = modelClass
@@ -73,8 +96,6 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 	 */
 	override fun <T> get(): T? {
 
-		println("¬¬¬¬¬¬¬¬¬¬¬¬¬ WebForm ${this} with prefix ${this.modelPrefix}¬¬¬¬¬¬¬¬¬¬¬¬¬¬ get()")
-
 		val primaryConstructor = modelClass.primaryConstructor
 		val constructorParams: MutableMap<KParameter, Any?> = mutableMapOf()
 
@@ -87,24 +108,20 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 		for (kParam in constructorKParams) {
 
 			var fieldName: String
-
-			val compoundConverter = kParam.findAnnotation<Compound>()
-
-			// SCENARIO 1: no prefix is provided
-			if(modelPrefix.isNull()) {
-				// just use the kParam.name
+			// If there is a model prefix, use it and the separator
+			if (modelPrefix.isNull()) {
 				fieldName = kParam.name!!
 			} else {
-				// SCENARIO 2: a prefix has been provided
 				fieldName = modelPrefix.toString() + kParam.name
 			}
 
-			logger.info("$this with prefix ${this.modelPrefix} - ${modelClass.simpleName} constructor parameter ${fieldName} value " + paramsMap.get(fieldName) + " (optional ${kParam.isOptional})")
+			logger.info("${modelClass.simpleName} constructor parameter ${fieldName} value " + paramsMap.get(fieldName) + " (optional ${kParam.isOptional})")
 
 			/* ************************************* GET THE KCLASS OF THE PARAMETER VIA THE JAVA ERASURE ******************/
 			// TODO: do I need to consider kParam.type.isMarkedNullable?
 			val erasure = kParam.type.jvmErasure
 			val requestParamValues = paramsMap.get(fieldName)
+			val compoundAnnotation = kParam.findAnnotation<Compound>()
 
 			// TODO: turn these two into a sealed class? Wish I had a struct!
 			val inputValue: String
@@ -125,25 +142,22 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 			if (kParam.isOptional && inputValue.isEmpty() && inputList.isEmpty()) {
 				// skip this parameter and use its default value
 			} else {
-
 				// building the constructorParams map
-				// if there is an annotated Converter, use it
 
-				// look for a compound model class annotation
-
-				if(compoundConverter != null) {
+				// look for a compound model class annotation and use its prefix if supplied
+				if (compoundAnnotation != null) {
 					val compoundErasure = kParam.type.jvmErasure
-					val compoundPrefixString = if(compoundConverter.prefix.isNullOrEmpty()) {
+					val compoundPrefixString = if (compoundAnnotation.prefix.isNullOrEmpty()) {
 						fieldName
 					} else {
-						compoundConverter.prefix
+						compoundAnnotation.prefix
 					}
-					val compoundPrefix = Prefix(compoundPrefixString, compoundConverter.separator)
-					val compoundModel = WebForm(request,compoundErasure,compoundPrefix)
+					val compoundPrefix = Prefix(compoundPrefixString, compoundAnnotation.separator)
+					val compoundModel = WebForm(request, compoundErasure, compoundPrefix)
 
-					constructorParams.put(kParam,compoundModel.get())
+					constructorParams.put(kParam, compoundModel.get())
 				} else {
-
+					// if there is an annotated Converter, use it
 					val converterAnnotation = kParam.findAnnotation<CConverter>()
 					if (converterAnnotation != null) {
 						constructorParams.put(kParam, getAnnotatedConverterValue(converterAnnotation, inputValue))
@@ -182,7 +196,7 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 	 * Convert the string input for the current parameter into an object of the correct class
 	 * It will use the annotated @CConverter class.
 	 */
-	@Deprecated("Don't think we want to use this?")
+	@Deprecated("Do not use this method", ReplaceWith("::getAnnotatedConverterValue()"))
 	private fun getConvertedValue(kParameter: KParameter, input: String): Any? {
 		val converterAnnotation = kParameter.findAnnotation<CConverter>()
 		var finalValue: Any? = null
@@ -242,7 +256,7 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 			servletRequest.setAttribute("org.eclipse.jetty.multipartConfig", multipartConfigElement)
 		}
 
-		// it's possible to have mulitple parts with the same name
+		// it's possible to have multiple parts with the same name
 		// instead, loop round servletRequest.parts and check each name in turn
 		for (part in servletRequest.parts) {
 			logger.info("Checking part $part to see if it matches one of the part names $partNames")
@@ -254,7 +268,12 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 		return fileList
 	}
 
-	private fun buildModelObject(erasure: KClass<*>, kParam: KParameter, inputValue: String, inputList: List<String>) : Any? {
+	/**
+	 * Transform the input value into the output based on the class of the parameter, given by `erasure`.
+	 * For the basic Kotlin types, a converter function is called (defined in the `org.liamjd.caisson.convertors` package).
+	 * For strings, the output is merely the input
+	 */
+	private fun buildModelObject(erasure: KClass<*>, kParam: KParameter, inputValue: String, inputList: List<String>): Any? {
 		val converter: Converter
 		when (erasure) {
 			CaissonMultipartContent::class -> {
@@ -268,17 +287,13 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 				logger.info("Extracting file information from Multipart request for ${kParam.name}")
 				val multiPartFiles = getMultiPartFile(raw, multiPartUploadNames!!)
 				if (multiPartFiles.size > 0 && multiPartFiles.size < 2) {
-					return  multiPartFiles[0]
-//					constructorParams.put(kParam, multiPartFiles[0])
+					return multiPartFiles[0]
 				} else {
 					return multiPartFiles
-//					constructorParams.put(kParam, multiPartFiles)
 				}
 			}
 			List::class -> {
 				// if a List<*>, get the type of the list element
-				// deal with lists
-
 				logger.info("We have a list. We need to extract the generic type and call the appropriate converter.")
 				if (kParam.type.arguments.size > 1) {
 					throw Exception("How could a List<*> ever have more than on argument?")
@@ -288,19 +303,16 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 				// list of strings for checkboxes, etc
 					String::class -> {
 						return inputList
-//						constructorParams.put(kParam, inputList)
 					}
 				// If it's a list of files, there's nothing we need to do. Our function can return a list of files already
 					CaissonMultipartContent::class -> {
 						val multiPartFiles = getMultiPartFile(servletRequest = raw!!, partNames = multiPartUploadNames!!)
 						return multiPartFiles
-//						constructorParams.put(kParam, multiPartFiles)
 					}
 					else -> {
 						logger.error("I don't know how to process a List of ${kParam.type.arguments.first().type}")
 					}
 				}
-
 
 			}
 			Enum::class -> {
@@ -308,10 +320,9 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 				logger.error("Caisson cannot yet parse Enums as parameters")
 				throw Exception("Caisson cannot yet parse Enums as parameters")
 			}
-		// if String, Int, Long, Float, Boolean, Double do the simple conversion from the queryParamMap, calling either the internal or the Annotated converter class
+		// if String, Int, Long, Float, Boolean, Double do the simple conversion from the inputValue, calling either the internal converter class
 			String::class -> {
 				return inputValue
-//				constructorParams.put(kParam, inputValue)
 			}
 			Int::class -> {
 				if (!kParam.type.isMarkedNullable && inputValue.isNullOrEmpty()) {
@@ -319,27 +330,22 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 				}
 				converter = DefaultIntConverter()
 				return getConverterValue(converter, inputValue)
-//				constructorParams.put(kParam, getConverterValue(converter, inputValue))
 			}
 			Long::class -> {
 				converter = DefaultLongConverter()
 				return getConverterValue(converter, inputValue)
-//				constructorParams.put(kParam, getConverterValue(converter, inputValue))
 			}
 			Double::class -> {
 				converter = DefaultDoubleConverter()
 				return getConverterValue(converter, inputValue)
-//				constructorParams.put(kParam, getConverterValue(converter, inputValue))
 			}
 			Float::class -> {
 				converter = DefaultFloatConverter()
 				return getConverterValue(converter, inputValue)
-//				constructorParams.put(kParam, getConverterValue(converter, inputValue))
 			}
 			Boolean::class -> {
 				converter = DefaultBooleanConverter()
 				return getConverterValue(converter, inputValue)
-//				constructorParams.put(kParam, getConverterValue(converter, inputValue))
 			}
 		}
 		// failure point! maybe better to throw an exception...
