@@ -1,6 +1,7 @@
 package org.liamjd.caisson.test.webforms
 
 import org.liamjd.caisson.annotations.CConverter
+import org.liamjd.caisson.annotations.Compound
 import org.liamjd.caisson.models.CaissonMultipartContent
 import java.time.Instant
 import java.time.LocalDate
@@ -38,3 +39,8 @@ class PersonWithInitBlock(val name: String, @CConverter(LocalDateConverter::clas
 	override fun toString(): String =
 		"${name} is ${age} years old and has private hash ${hash}"
 }
+
+data class Address(val addr1: String, val addr2: String, val addr3: String, val town: String, val postcode: String)
+data class BusinessDetails(val businessName: String, @Compound val address: Address, val email: String)
+
+data class BusinessWithPrefix(val businessName: String, @Compound(prefix = "wibble", separator = "-") val address: Address, val email: String)

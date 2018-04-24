@@ -48,3 +48,11 @@ class LocalDateConverter : Converter {
 		}
 	}
 }
+
+/*
+class AddressConverter : CompoundConverter {
+	override fun convert(modelObject: Any) : Address {
+
+		return Address("A","B","C","D","E")
+	}
+}*/

@@ -1,6 +1,7 @@
 package org.liamjd.caisson.webforms
 
 import org.liamjd.caisson.annotations.CConverter
+import org.liamjd.caisson.annotations.Compound
 import org.liamjd.caisson.convertors.*
 import org.liamjd.caisson.exceptions.CaissonBindException
 import org.liamjd.caisson.models.CaissonMultipartContent
@@ -19,7 +20,18 @@ import kotlin.reflect.jvm.jvmErasure
 
 typealias RequestParams = Map<String, Array<String>>
 
+class Prefix(val prefix: String?, val separator: String? = ".") {
+	constructor() : this("")
+
+	fun isNull(): Boolean = prefix.isNullOrEmpty()
+	override fun toString(): String = if(isNull()) { "" } else { prefix + separator }
+}
+
 class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
+
+	companion object {
+		var counter: Int = 0
+	}
 
 	val logger = LoggerFactory.getLogger(WebForm::class.java)
 
@@ -28,25 +40,41 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 	private val modelClass: KClass<*>
 	private var multiPartUploadNames: List<String>? = null
 	private lateinit var modelObject: Any
+	private val request: Request
+	private var modelPrefix: Prefix = Prefix()
 
 	constructor(sparkRequest: Request, modelClass: KClass<*>, partNames: List<String>) : this(sparkRequest, modelClass) {
 		this.multiPartUploadNames = partNames
+//		this.modelPrefix = Prefix()
 	}
 
 	constructor(sparkRequest: Request, modelClass: KClass<*>, partName: String) : this(sparkRequest, modelClass) {
 		this.multiPartUploadNames = listOf(partName)
+//		this.modelPrefix = Prefix()
 	}
+
+	constructor(sparkRequest: Request, modelClass: KClass<*>, prefix: Prefix = Prefix()): this(sparkRequest, modelClass) {
+		this.modelPrefix = prefix
+		counter++
+		println("--${counter} ---------- a prefix has been provided and set to '${modelPrefix}' for ${modelClass.simpleName}")
+	}
+
+	//, modelPrefix: Prefix = Prefix()
 
 	init {
 		this.modelClass = modelClass
 		this.paramsMap = sparkRequest.queryMap().toMap()
 		this.raw = sparkRequest.raw()
+		this.request = sparkRequest
 	}
 
 	/**
 	 * Generate an object with the given `KClass`, populating all of its primary constructor parameters
 	 */
 	override fun <T> get(): T? {
+
+		println("¬¬¬¬¬¬¬¬¬¬¬¬¬ WebForm ${this} with prefix ${this.modelPrefix}¬¬¬¬¬¬¬¬¬¬¬¬¬¬ get()")
+
 		val primaryConstructor = modelClass.primaryConstructor
 		val constructorParams: MutableMap<KParameter, Any?> = mutableMapOf()
 
@@ -57,15 +85,30 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 
 		val constructorKParams: List<KParameter> = primaryConstructor.parameters
 		for (kParam in constructorKParams) {
-			logger.info("${modelClass.simpleName} constructor parameter ${kParam.name} value " + paramsMap.get(kParam.name) + " (optional ${kParam.isOptional})")
+
+			var fieldName: String
+
+			val compoundConverter = kParam.findAnnotation<Compound>()
+
+			// SCENARIO 1: no prefix is provided
+			if(modelPrefix.isNull()) {
+				// just use the kParam.name
+				fieldName = kParam.name!!
+			} else {
+				// SCENARIO 2: a prefix has been provided
+				fieldName = modelPrefix.toString() + kParam.name
+			}
+
+			logger.info("$this with prefix ${this.modelPrefix} - ${modelClass.simpleName} constructor parameter ${fieldName} value " + paramsMap.get(fieldName) + " (optional ${kParam.isOptional})")
 
 			/* ************************************* GET THE KCLASS OF THE PARAMETER VIA THE JAVA ERASURE ******************/
-			// TODO: do I need to consider kParam.isOptional and kParam.type.isMarkedNullable?
+			// TODO: do I need to consider kParam.type.isMarkedNullable?
 			val erasure = kParam.type.jvmErasure
-			val requestParamValues = paramsMap.get(kParam.name)
+			val requestParamValues = paramsMap.get(fieldName)
+
+			// TODO: turn these two into a sealed class? Wish I had a struct!
 			val inputValue: String
 			val inputList: List<String>
-			val converter: Converter?
 
 			if (requestParamValues == null) {
 				inputValue = ""
@@ -82,101 +125,43 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 			if (kParam.isOptional && inputValue.isEmpty() && inputList.isEmpty()) {
 				// skip this parameter and use its default value
 			} else {
+
 				// building the constructorParams map
 				// if there is an annotated Converter, use it
-				val converterAnnotation = kParam.findAnnotation<CConverter>()
-				if (converterAnnotation != null) {
-					constructorParams.put(kParam, getAnnotatedConverterValue(converterAnnotation, inputValue))
-				} else {
-					when (erasure) {
-						CaissonMultipartContent::class -> {
-							// if CaissonMultipartContent, handle file uploads
-							if (raw == null) {
-								throw Exception("Caisson cannot parse this CaissonMultipartContent as the raw servlet request was null")
-							}
-							if (multiPartUploadNames == null) {
-								throw Exception("Caisson cannot parse this CaissonMultipartContent the input part names are null")
-							}
-							logger.info("Extracting file information from Multipart request for ${kParam.name}")
-							val multiPartFiles = getMultiPartFile(raw, multiPartUploadNames!!)
-							if (multiPartFiles.size > 0 && multiPartFiles.size < 2) {
-								constructorParams.put(kParam, multiPartFiles[0])
-							} else {
-								constructorParams.put(kParam, multiPartFiles)
-							}
-						}
-						List::class -> {
-							// if a List<*>, get the type of the list element
-							// deal with lists
 
-							logger.info("We have a list. We need to extract the generic type and call the appropriate converter.")
-							if (kParam.type.arguments.size > 1) {
-								throw Exception("How could a List<*> ever have more than on argument?")
-							}
-							// Now this starts to get a bit recursive...
-							when (kParam.type.arguments.first().type?.jvmErasure) {
-							// list of strings for checkboxes, etc
-								String::class -> {
-									constructorParams.put(kParam, inputList)
-								}
-							// If it's a list of files, there's nothing we need to do. Our function can return a list of files already
-								CaissonMultipartContent::class -> {
-									val multiPartFiles = getMultiPartFile(servletRequest = raw!!, partNames = multiPartUploadNames!!)
-									constructorParams.put(kParam, multiPartFiles)
-								}
-								else -> {
-									logger.error("I don't know how to process a List of ${kParam.type.arguments.first().type}")
-								}
-							}
+				// look for a compound model class annotation
 
-
-						}
-						Enum::class -> {
-							// deal with enums?
-							logger.error("Caisson cannot yet parse Enums as parameters")
-							throw Exception("Caisson cannot yet parse Enums as parameters")
-						}
-					// if String, Int, Long, Float, Boolean, Double do the simple conversion from the queryParamMap, calling either the internal or the Annotated converter class
-						String::class -> {
-							constructorParams.put(kParam, inputValue)
-						}
-						Int::class -> {
-							if (!kParam.type.isMarkedNullable && inputValue.isNullOrEmpty()) {
-								logger.error("Parameter ${kParam.name} has not been marked nullable but input value is empty")
-							}
-							converter = DefaultIntConverter()
-							constructorParams.put(kParam, getConverterValue(converter, inputValue))
-						}
-						Long::class -> {
-							converter = DefaultLongConverter()
-							constructorParams.put(kParam, getConverterValue(converter, inputValue))
-						}
-						Double::class -> {
-							converter = DefaultDoubleConverter()
-							constructorParams.put(kParam, getConverterValue(converter, inputValue))
-						}
-						Float::class -> {
-							converter = DefaultFloatConverter()
-							constructorParams.put(kParam, getConverterValue(converter, inputValue))
-						}
-						Boolean::class -> {
-							converter = DefaultBooleanConverter()
-							constructorParams.put(kParam, getConverterValue(converter, inputValue))
-						}
+				if(compoundConverter != null) {
+					val compoundErasure = kParam.type.jvmErasure
+					val compoundPrefixString = if(compoundConverter.prefix.isNullOrEmpty()) {
+						fieldName
+					} else {
+						compoundConverter.prefix
 					}
+					val compoundPrefix = Prefix(compoundPrefixString, compoundConverter.separator)
+					val compoundModel = WebForm(request,compoundErasure,compoundPrefix)
 
+					constructorParams.put(kParam,compoundModel.get())
+				} else {
+
+					val converterAnnotation = kParam.findAnnotation<CConverter>()
+					if (converterAnnotation != null) {
+						constructorParams.put(kParam, getAnnotatedConverterValue(converterAnnotation, inputValue))
+					} else {
+						val result = buildModelObject(erasure, kParam, inputValue, inputList)
+						constructorParams.put(kParam, result)
+					}
 				}
-
 			} // end for loop
 		}
 
 		// Finally, construct our model by passing in our constructor parameter map
 		primaryConstructor.let {
-			logger.info("Finally construct our object with paramsMap:")
+			logger.info("Finally construct our ${modelClass.simpleName} object with paramsMap:")
 			constructorParams.forEach {
-				logger.info("..... ${it.key} -> ${it.value}")
+				logger.info("..... ${it.key.name} -> ${it.value}")
 			}
-			logger.info("expecting ${primaryConstructor.parameters}")
+			logger.debug("expecting ${primaryConstructor.parameters}")
 			try {
 				modelObject = it.callBy(constructorParams)
 			} catch (ite: InvocationTargetException) {
@@ -267,6 +252,98 @@ class WebForm(sparkRequest: Request, modelClass: KClass<*>) : Form {
 		}
 
 		return fileList
+	}
+
+	private fun buildModelObject(erasure: KClass<*>, kParam: KParameter, inputValue: String, inputList: List<String>) : Any? {
+		val converter: Converter
+		when (erasure) {
+			CaissonMultipartContent::class -> {
+				// if CaissonMultipartContent, handle file uploads
+				if (raw == null) {
+					throw Exception("Caisson cannot parse this CaissonMultipartContent as the raw servlet request was null")
+				}
+				if (multiPartUploadNames == null) {
+					throw Exception("Caisson cannot parse this CaissonMultipartContent the input part names are null")
+				}
+				logger.info("Extracting file information from Multipart request for ${kParam.name}")
+				val multiPartFiles = getMultiPartFile(raw, multiPartUploadNames!!)
+				if (multiPartFiles.size > 0 && multiPartFiles.size < 2) {
+					return  multiPartFiles[0]
+//					constructorParams.put(kParam, multiPartFiles[0])
+				} else {
+					return multiPartFiles
+//					constructorParams.put(kParam, multiPartFiles)
+				}
+			}
+			List::class -> {
+				// if a List<*>, get the type of the list element
+				// deal with lists
+
+				logger.info("We have a list. We need to extract the generic type and call the appropriate converter.")
+				if (kParam.type.arguments.size > 1) {
+					throw Exception("How could a List<*> ever have more than on argument?")
+				}
+				// Now this starts to get a bit recursive...
+				when (kParam.type.arguments.first().type?.jvmErasure) {
+				// list of strings for checkboxes, etc
+					String::class -> {
+						return inputList
+//						constructorParams.put(kParam, inputList)
+					}
+				// If it's a list of files, there's nothing we need to do. Our function can return a list of files already
+					CaissonMultipartContent::class -> {
+						val multiPartFiles = getMultiPartFile(servletRequest = raw!!, partNames = multiPartUploadNames!!)
+						return multiPartFiles
+//						constructorParams.put(kParam, multiPartFiles)
+					}
+					else -> {
+						logger.error("I don't know how to process a List of ${kParam.type.arguments.first().type}")
+					}
+				}
+
+
+			}
+			Enum::class -> {
+				// deal with enums?
+				logger.error("Caisson cannot yet parse Enums as parameters")
+				throw Exception("Caisson cannot yet parse Enums as parameters")
+			}
+		// if String, Int, Long, Float, Boolean, Double do the simple conversion from the queryParamMap, calling either the internal or the Annotated converter class
+			String::class -> {
+				return inputValue
+//				constructorParams.put(kParam, inputValue)
+			}
+			Int::class -> {
+				if (!kParam.type.isMarkedNullable && inputValue.isNullOrEmpty()) {
+					logger.error("Parameter ${kParam.name} has not been marked nullable but input value is empty")
+				}
+				converter = DefaultIntConverter()
+				return getConverterValue(converter, inputValue)
+//				constructorParams.put(kParam, getConverterValue(converter, inputValue))
+			}
+			Long::class -> {
+				converter = DefaultLongConverter()
+				return getConverterValue(converter, inputValue)
+//				constructorParams.put(kParam, getConverterValue(converter, inputValue))
+			}
+			Double::class -> {
+				converter = DefaultDoubleConverter()
+				return getConverterValue(converter, inputValue)
+//				constructorParams.put(kParam, getConverterValue(converter, inputValue))
+			}
+			Float::class -> {
+				converter = DefaultFloatConverter()
+				return getConverterValue(converter, inputValue)
+//				constructorParams.put(kParam, getConverterValue(converter, inputValue))
+			}
+			Boolean::class -> {
+				converter = DefaultBooleanConverter()
+				return getConverterValue(converter, inputValue)
+//				constructorParams.put(kParam, getConverterValue(converter, inputValue))
+			}
+		}
+		// failure point! maybe better to throw an exception...
+		return null
 	}
 
 }
