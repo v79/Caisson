@@ -60,7 +60,7 @@ Alternatively, if each input component has a different name, supply a List of th
 ```
 
 ```kotlin
-val myFiles = request.bind<MyFiles>(arrayListOf("drivingLicense,passport"))
+val myFiles = request.bind<MyFiles>(arrayListOf("drivingLicense","passport"))
 ```
 
 This project is in the very earliest stages, and I have a lot to learn about Kotlin, HTTP requests, Reflection and more besides. So don't even think of using it :). There is a corresponding demo project hosted on github called [https://github.com/v79/spark-caisson-integration](spark-caisson-integration) which implements all the features of Caisson and may prove useful while I'm still working on the documentation.
