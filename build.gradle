@@ -6,8 +6,11 @@ buildscript {
     ext.kotlin_version = '1.2.41'
     ext.kotlin_test_version = '3.0.0-RC2'
     ext.spek_version = '1.1.5'
-    ext.thymeleaf_version = '3.0.6.RELEASE'
+    ext.thymeleaf_version = '3.0.9.RELEASE'
+	ext.thymeleaf_java8time_version = '3.0.1.RELEASE'
     ext.spark_kotlin_version = '1.0.0-alpha'
+    ext.slf4j_version = '1.7.25'
+	ext.mockk_version = '1.7.16'
 
     repositories {
         mavenCentral()
@@ -33,14 +36,14 @@ dependencies {
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: "$kotlin_version"
 
     // logging
-    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.6.2'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: "$slf4j_version"
 
     // spark web framework
     compile group: 'com.sparkjava', name: 'spark-kotlin', version: "$spark_kotlin_version"
 
     // Thymeleaf templating engine
     compile group: 'org.thymeleaf', name:"thymeleaf", version: "$thymeleaf_version"
-    compile group: 'org.thymeleaf.extras', name: 'thymeleaf-extras-java8time', version: '3.0.0.RELEASE'
+    compile group: 'org.thymeleaf.extras', name: 'thymeleaf-extras-java8time', version: "$thymeleaf_java8time_version"
 
     // testing
     testCompile group: "org.jetbrains.kotlin", name: "kotlin-test", version: "$kotlin_version"
@@ -48,7 +51,7 @@ dependencies {
         // exclude kotlin from spek, so that we can use the newest version
         exclude group: 'org.jetbrains.kotlin'
     }
-    testCompile "io.mockk:mockk:1.7.15"
+    testCompile group: "io.mockk", name: "mockk", version: "${mockk_version}"
     testRuntime("org.jetbrains.spek:spek-junit-platform-engine:${spek_version}") {
         // exclude junit and kotlin from the engine, so we can use our own versions
         exclude group: 'org.junit.platform'
