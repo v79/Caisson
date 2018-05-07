@@ -21,9 +21,8 @@ class InitializerBlockTests: Spek({
 	val mSparkQueryMap = mockk<QueryParamsMap>()
 	val map = mutableMapOf<String, Array<String>>()
 
-	every { mSparkRequest.queryMap() } returns mSparkQueryMap
+	every { mSparkRequest.queryMap().toMap()} returns map
 	every { mSparkRequest.raw() } returns mRaw
-	every { mSparkQueryMap.toMap() } returns map
 	every { mRaw.getAttribute(any()) } returns null
 	every { mRaw.setAttribute(any(), any()) } just Runs
 

@@ -9,7 +9,6 @@ import org.liamjd.caisson.annotations.CConverter
 import org.liamjd.caisson.convertors.Converter
 import org.liamjd.caisson.extensions.bind
 import org.liamjd.caisson.webforms.WebForm
-import spark.QueryParamsMap
 import spark.Request
 import java.util.*
 import kotlin.test.assertEquals
@@ -52,11 +51,9 @@ data class BirthdayPerson(val name: String, @CConverter(SimpleDateConverter::cla
 class WebFormTests : Spek({
 
 	val mSparkRequest = mockk<Request>()
-	val mSparkQueryMap = mockk<QueryParamsMap>()
 	val requestMap = mutableMapOf<String, Array<String>>()
 
-	every { mSparkRequest.queryMap() } returns mSparkQueryMap
-	every { mSparkQueryMap.toMap()} returns requestMap
+	every { mSparkRequest.queryMap().toMap()} returns requestMap
 	every { mSparkRequest.raw()} returns null
 
 	beforeEachTest {
