@@ -10,7 +10,7 @@ buildscript {
 	ext.thymeleaf_java8time_version = '3.0.1.RELEASE'
     ext.spark_kotlin_version = '1.0.0-alpha'
     ext.slf4j_version = '1.7.25'
-	ext.mockk_version = '1.7.16'
+	ext.mockk_version = '1.8.5'
 
     repositories {
         mavenCentral()
