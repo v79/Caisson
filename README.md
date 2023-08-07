@@ -1,6 +1,8 @@
 # Caisson
 An MVC library for the Spark-Kotlin project
 
+# PROJECT CLOSED
+
 **Caisson** is an attempt introduce some basic MVC functionality to the Spark-Kotlin project. It is inspired by SpringMVC, but with a much smaller and simpler scope. Step one is to introduce *model binding* and *converters* to Spark-Kotlin, using annotations and reflection to construct instances of Kotlin classes from a Spark-Kotlin request parameter map.
 
 Users of the library will be able to bind any model class from a spark-kotlin request, mapping the request param names to the constructor parameters for the model. For instance, to bind the `Person` model from the spark-kotlin request, simply call the `bind<>()` function on the `request`, supplying the model class in the generics diamonds.
